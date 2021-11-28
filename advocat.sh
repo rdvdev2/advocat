@@ -1,6 +1,6 @@
 #!/bin/bash
 
-AV_VERSION="1.1"
+AV_VERSION="1.2"
 AV_COMPILER="p1++"
 AV_DIR="${HOME}/.advocat"
 

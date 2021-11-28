@@ -21,9 +21,9 @@ Afegeix el programa a l'entorn actual amb:
 ```Bash
 source advocat.sh
 ```
-O, si ho prefereixes, automatitza la tasca afegint la mateixa línia al teu `.profile`:
+O, si ho prefereixes, automatitza la tasca afegint la mateixa línia al teu `.bashrc`:
 ```Bash
-# ~/.profile
+# ~/.bashrc
 # ...
 
 # Afegeix l'advocat a l'entorn

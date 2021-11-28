@@ -20,34 +20,34 @@ _advocat_run_test () {
     local SKIP=$5
 
     if [ "${INDEX}" -lt 0 ]; then
-        echo -n "${AV_YELLOW}TEST: "
+        echo -e -n "${AV_YELLOW}TEST: "
     else
-        echo -n "${AV_YELLOW}TEST ${INDEX}: "
+        echo -e -n "${AV_YELLOW}TEST ${INDEX}: "
     fi
 
     if [ "$SKIP" = 1 ]; then
-        echo "${AV_CYAN}SKIP ✘${AV_NC}"
+        echo -e "${AV_CYAN}SKIP ✘${AV_NC}"
         return 0
     else
         ${BINARY} < "${INPUTS}" > "${INPUTS%.*}.out"
         if cmp -s "${OUTPUTS}" "${INPUTS%.*}.out"
         then
-            echo "${AV_GREEN}PASS ✓${AV_NC}"
+            echo -e "${AV_GREEN}PASS ✓${AV_NC}"
             return 1
         else
-            echo "${AV_RED}FAIL ✘${AV_NC}"
-            echo "${AV_PURPLE}==> Program output:"
+            echo -e "${AV_RED}FAIL ✘${AV_NC}"
+            echo -e "${AV_PURPLE}==> Program output:"
             cat "${TEST_INPUT%.*}.out"
-            echo "==> Expected output:"
+            echo -e "==> Expected output:"
             cat "${TEST_INPUT%.*}.cor"
-            echo -n "${AV_NC}"
+            echo -e -n "${AV_NC}"
             return 0
         fi
     fi
 }
 
 advocat () {
-    echo "Advocat v${AV_VERSION} by Roger Díaz Viñolas (rdvdev2@gmail.com)"
+    echo -e "Advocat v${AV_VERSION} by Roger Díaz Viñolas (rdvdev2@gmail.com)"
 
     # Problem specific variables
     local PROBLEM_ID
@@ -75,10 +75,10 @@ advocat () {
     local PRIVATE_PROBLEM=0
     if ! [ "${PROBLEM_ID:0:1}" = "P" ]; then
         echo
-        echo "${AV_ORANGE}WARNING: This problem isn't public! No tests or main() will be downloaded!${AV_NC}"
-        echo "You can manually download the problem zip from [${SAMPLE_DOWNLOAD_URL}] and save it as [${SAMPLE_DOWNLOAD_FILE}]."
-        echo "If needed, download the provided main.cc from [${MAIN_DOWNLOAD_URL}] and save it as [${MAIN_DOWNLOAD_FILE}]."
-        echo "The script will use these files if it finds them"
+        echo -e "${AV_ORANGE}WARNING: This problem isn't public! No tests or main() will be downloaded!${AV_NC}"
+        echo -e "You can manually download the problem zip from [${SAMPLE_DOWNLOAD_URL}] and save it as [${SAMPLE_DOWNLOAD_FILE}]."
+        echo -e "If needed, download the provided main.cc from [${MAIN_DOWNLOAD_URL}] and save it as [${MAIN_DOWNLOAD_FILE}]."
+        echo -e "The script will use these files if it finds them"
         echo
 
         PRIVATE_PROBLEM=1
@@ -99,32 +99,32 @@ advocat () {
     if [ "${PRIVATE_PROBLEM}" = 0 ]; then
 
         # Download tests from jutge.org
-        echo -n "${AV_YELLOW}Downloading tests from jutge.org... "
+        echo -e -n "${AV_YELLOW}Downloading tests from jutge.org... "
         if [ -f "${SAMPLE_DOWNLOAD_FILE}" ]; then
-            echo "${AV_CYAN}SKIP ✓${AV_NC}"
+            echo -e "${AV_CYAN}SKIP ✓${AV_NC}"
         else
             wget -nv -nc -O "${SAMPLE_DOWNLOAD_FILE}" "${SAMPLE_DOWNLOAD_URL}" > /dev/null 2> /dev/null
             if [ -f "${SAMPLE_DOWNLOAD_FILE}" ]; then
-                echo "${AV_GREEN}DONE ✓${AV_NC}"
+                echo -e "${AV_GREEN}DONE ✓${AV_NC}"
             else
-                echo "${AV_RED}FAIL ✘${AV_NC}"
+                echo -e "${AV_RED}FAIL ✘${AV_NC}"
                 return
             fi
         fi
 
         # Download main() from jutge.org
-        echo -n "${AV_YELLOW}Downloading main() from jutge.org... "
+        echo -e -n "${AV_YELLOW}Downloading main() from jutge.org... "
         if [ "${EXTERNAL_MAIN}" = 0 ]; then
-            echo "${AV_CYAN}SKIP ✓${AV_NC}"
+            echo -e "${AV_CYAN}SKIP ✓${AV_NC}"
         else
             if [ -f "${MAIN_DOWNLOAD_FILE}" ]; then
-                echo "${AV_CYAN}SKIP ✓${AV_NC}"
+                echo -e "${AV_CYAN}SKIP ✓${AV_NC}"
             else
                 wget -nv -nc -O "${MAIN_DOWNLOAD_FILE}" "${MAIN_DOWNLOAD_URL}" > /dev/null 2> /dev/null
                 if [ -f "${MAIN_DOWNLOAD_FILE}" ]; then
-                    echo "${AV_GREEN}DONE ✓${AV_NC}"
+                    echo -e "${AV_GREEN}DONE ✓${AV_NC}"
                 else
-                    echo "${AV_RED}FAIL ✘${AV_NC}"
+                    echo -e "${AV_RED}FAIL ✘${AV_NC}"
                     return
                 fi
             fi
@@ -132,25 +132,25 @@ advocat () {
     fi
 
     # Extract tests zip
-    echo -n "${AV_YELLOW}Extracting tests... "
+    echo -e -n "${AV_YELLOW}Extracting tests... "
     if [ -d "${SAMPLES_FOLDER}" ]; then
-        echo "${AV_CYAN}SKIP ✓${AV_NC}"
+        echo -e "${AV_CYAN}SKIP ✓${AV_NC}"
     elif ! [ -f "${SAMPLE_DOWNLOAD_FILE}" ]; then
-        echo "${AV_CYAN}SKIP ✓ (No tests will run) ${AV_NC}"
+        echo -e "${AV_CYAN}SKIP ✓ (No tests will run) ${AV_NC}"
     else
         mkdir -p "${SAMPLES_FOLDER}"
         unzip -joq "${SAMPLE_DOWNLOAD_FILE}" "**/sample*" -d "${SAMPLES_FOLDER}" > /dev/null 2> /dev/null
         if [ -d "${SAMPLES_FOLDER}" ]; then
-            echo "${AV_GREEN}DONE ✓${AV_NC}"
+            echo -e "${AV_GREEN}DONE ✓${AV_NC}"
         else
-            echo "${AV_RED}FAIL ✘${AV_NC}"
+            echo -e "${AV_RED}FAIL ✘${AV_NC}"
             return
         fi
     fi
 
     # Compile and run
     echo
-    echo "Compiling and running tests..."
+    echo -e "Compiling and running tests..."
 
     # Find the test files
     local SAMPLES=""
@@ -159,7 +159,7 @@ advocat () {
     elif [ -f "${SAMPLES_FOLDER}/sample-1.inp" ]; then
         SAMPLES=("${SAMPLES_FOLDER}"/sample-*.inp)
     else
-        echo "${AV_ORANGE}WARNING: No tests were found!${AV_NC}"
+        echo -e "${AV_ORANGE}WARNING: No tests were found!${AV_NC}"
     fi
 
     # Recompile the binary
@@ -167,16 +167,16 @@ advocat () {
     local SKIP_TESTS=1
     eval "${COMPILE_COMMAND}" 2> "${COMPILE_OUTPUT_FILE}"
     if [ -f "${BINARY}" ]; then
-        echo "${AV_YELLOW}COMPILATION: ${AV_GREEN}PASS ✓${AV_NC}"
+        echo -e "${AV_YELLOW}COMPILATION: ${AV_GREEN}PASS ✓${AV_NC}"
         chmod +x "${BINARY}"
         SKIP_TESTS=0
     else
-        echo "${AV_YELLOW}COMPILATION: ${AV_RED}FAIL ✘${AV_NC}"
-        echo "==> Compilation command:"
-        echo "${AV_PURPLE}${COMPILE_COMMAND}${AV_NC}"
-        echo "==> Compilation output:${AV_PURPLE}"
+        echo -e "${AV_YELLOW}COMPILATION: ${AV_RED}FAIL ✘${AV_NC}"
+        echo -e "==> Compilation command:"
+        echo -e "${AV_PURPLE}${COMPILE_COMMAND}${AV_NC}"
+        echo -e "==> Compilation output:${AV_PURPLE}"
         cat "${COMPILE_OUTPUT_FILE}"
-        echo -n "${AV_NC}"
+        echo -e -n "${AV_NC}"
     fi
 
     # Run each test
@@ -192,13 +192,13 @@ advocat () {
 
     # Give a veredict
     if [ "${SKIP_TESTS}" = 1 ]; then
-        echo -n "${AV_RED}Your code doesn't compile! "
+        echo -e -n "${AV_RED}Your code doesn't compile! "
     elif [ "${TEST_COUNT}" = 0 ]; then
-        echo -n "${AV_ORANGE}Your code compiles but you shoul test it before submitting. "
+        echo -e -n "${AV_ORANGE}Your code compiles but you shoul test it before submitting. "
     elif [ "$PASS_COUNT" = "$TEST_COUNT" ]; then
-        echo -n "${AV_GREEN}You're ready to submit your code to jutge.org! "
+        echo -e -n "${AV_GREEN}You're ready to submit your code to jutge.org! "
     else
-        echo -n "${AV_RED}DON'T submit your code to jutge.org! "
+        echo -e -n "${AV_RED}DON'T submit your code to jutge.org! "
     fi
-    echo "(${PASS_COUNT} out of ${TEST_COUNT} tests passed)${AV_NC}"
+    echo -e "(${PASS_COUNT} out of ${TEST_COUNT} tests passed)${AV_NC}"
 }

@@ -8,25 +8,30 @@ Aquest script és capaç de compilar els programes del jutge i provar-los automa
 - bash (o derivats)
 - p1++
 - grep
+- git
 
 ## Instruccions d'ús
 Guarda el teu treball com a `main.cc` a una carpeta anomenada com la ID del problema del jutge (p.ex. `P90615_ca/main.cc`). Executa `advocat` al directori i el script automaticament complilarà i provarà el teu programa. Tingues en compte que si la ID del problema comença amb 'X' el problema és privat i no és possible descarregar els arxius automàticament. En aquest cas, el programa et donarà totes les instruccions necessàries per a poder descarregar els arxius manualment i possar-los a disposició del script.
 
-## Instruccions d'instalació
-Descarrega el script i activa-hi el permís d'execució:
-```Bash
-chmod +x advocat.sh
+## Instruccions d'instalació / actualització
+Descarrega el repositori a una ubicació fàcil de recordar:
+``` Bash
+cd ~
+git clone https://github.com/rdvdev2/advocat
 ```
-Afegeix el programa a l'entorn actual amb:
-```Bash
-source advocat.sh
-```
-O, si ho prefereixes, automatitza la tasca afegint la mateixa línia al teu `.bashrc`:
-```Bash
-# ~/.bashrc
-# ...
+Afegeix la comanda `advocat` al entorn de forma automàtica, modificant el `.bashrc`, `.zshrc` o similars:
+``` Bash
+# Fitxer: ~/.bashrc o ~/.zshrc
+# Afegeix les següents línies al final del fitxer
 
-# Afegeix l'advocat a l'entorn
-source ~/advocat.sh # Suposant que has guardat l'script a aquesta ubicació
+# Afegeix el advocat a l'entorn
+source ${HOME}/advocat/advocat.sh
 ```
-El proper cop que iniciis la terminal el script `advocat` estarà disponible sense necessitat d'executar el script manualment!
+El proper cop que iniciis la terminal el script `advocat` estarà disponible!
+
+Per actualitzar el programa només et caldrà actualitzar el repositori:
+``` Bash
+cd ~/advocat
+git pull
+```
+*Nota: Aquest procés de instalació i actualització serà automatitzat en una futura versió del programa*

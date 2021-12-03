@@ -1,6 +1,6 @@
 #!/bin/bash
 
-AV_VERSION="1.2"
+AV_VERSION="1.3"
 AV_COMPILER="p1++"
 AV_DIR="${HOME}/.advocat"
 
@@ -15,8 +15,8 @@ AV_NC='\033[0m' # No Color
 _advocat_run_test () {
     local INDEX=$1
     local BINARY=$2
-    local INPUTS=$3
-    local OUTPUTS=$4
+    local INPUT=$3
+    local EXPECT_OUTPUT=$4
     local SKIP=$5
 
     if [ "${INDEX}" -lt 0 ]; then
@@ -29,17 +29,18 @@ _advocat_run_test () {
         echo -e "${AV_CYAN}SKIP ✘${AV_NC}"
         return 0
     else
-        ${BINARY} < "${INPUTS}" > "${INPUTS%.*}.out"
-        if cmp -s "${OUTPUTS}" "${INPUTS%.*}.out"
+        local EXEC_OUTPUT="${INPUT%.*}.out"
+        ${BINARY} < "${INPUT}" > "${EXEC_OUTPUT}"
+        if cmp -s "${EXPECT_OUTPUT}" "${EXEC_OUTPUT}"
         then
             echo -e "${AV_GREEN}PASS ✓${AV_NC}"
             return 1
         else
             echo -e "${AV_RED}FAIL ✘${AV_NC}"
             echo -e "${AV_PURPLE}==> Program output:"
-            cat "${TEST_INPUT%.*}.out"
+            cat "${EXEC_OUTPUT}"
             echo -e "==> Expected output:"
-            cat "${TEST_INPUT%.*}.cor"
+            cat "${EXPECT_OUTPUT}"
             echo -e -n "${AV_NC}"
             return 0
         fi
@@ -185,7 +186,7 @@ advocat () {
     for TEST_INPUT in ${SAMPLES}
     do
         TEST_COUNT=$((TEST_COUNT + 1))
-        _advocat_run_test "$TEST_COUNT" "${BINARY}" "${TEST_INPUT}" "${TEST_INPUT%.*}.out" "${SKIP_TESTS}"
+        _advocat_run_test "$TEST_COUNT" "${BINARY}" "${TEST_INPUT}" "${TEST_INPUT%.*}.cor" "${SKIP_TESTS}"
         PASS_COUNT=$((PASS_COUNT + $?))
     done
     echo

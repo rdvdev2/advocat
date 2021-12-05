@@ -72,6 +72,13 @@ advocat () {
     local MAIN_DOWNLOAD_URL="https://jutge.org/problems/${PROBLEM_ID}/main/cc"
     local MAIN_GREP_PATTERN="int main()"
 
+    # Check if the directory contains a main.cc file
+    if ! [ -e "${SOURCE}" ]; then
+        echo
+        echo -e "${AV_RED}ERROR: This folder doesn't contain a main.cc file!${AV_NC}"
+        return
+    fi
+
     # Check if problem is public
     local PRIVATE_PROBLEM=0
     if ! [ "${PROBLEM_ID:0:1}" = "P" ]; then

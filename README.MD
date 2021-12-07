@@ -35,3 +35,10 @@ cd ~/advocat
 git pull
 ```
 *Nota: Aquest procés de instalació i actualització serà automatitzat en una futura versió del programa*
+
+## Com afegir tests a un problema
+Alguns problemes al jutge no tenen tests públics, o potser vols afegir al teu joc de proves un test privat que ha fallat o altres casos inventats per tu. En aquests casos, l'advocat pot llegir els tests que guardis a la mateixa carpeta que el teu ```main.cc```. Cada test consta de dos arxius, on ```#``` és el nombre del test (començant per 1):
+- ```sample-#.inp``` (o ```sample.inp``` en cas d'haver-hi un únic test): Contè l'entrada del programa
+- ```sample-#.cor``` (o ```sample.cor``` en cas d'haver-hi un únic test): Contè la sortida correcta del programa per a l'entrada corresponent
+
+És important vigilar les línies en blanc al final del arxiu ```.cor```, ja que si hi ha una línia en blanc al final del arxiu el test només es considerarà correcte si el programa també produeix una línia en blanc. En el cas d'escriure tests per a un problema de procediment (sense ```main()```) es recomana comprovar l'arxiu ```~/.advocat/ID_PROBLEMA/main.cc``` per saber com es llegirà l'entrada.

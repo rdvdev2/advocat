@@ -1,6 +1,6 @@
 #!/bin/bash
 
-AV_VERSION="1.4"
+AV_VERSION="1.5"
 AV_COMPILER="p1++"
 AV_DIR="${HOME}/.advocat"
 
@@ -12,7 +12,7 @@ AV_CYAN="\033[1;36m"
 AV_ORANGE="\033[0;33m"
 AV_NC='\033[0m' # No Color
 
-_advocat_run_test () {
+__advocat_run_test () {
     local INDEX=$1
     local BINARY=$2
     local INPUT=$3
@@ -161,12 +161,21 @@ advocat () {
     echo -e "Compiling and running tests..."
 
     # Find the test files
-    local SAMPLES=""
+    local JUTGE_SAMPLES=""
     if [ -f "${SAMPLES_FOLDER}/sample.inp" ]; then
-        SAMPLES="${SAMPLES_FOLDER}/sample.inp"
+        JUTGE_SAMPLES="${SAMPLES_FOLDER}/sample.inp"
     elif [ -f "${SAMPLES_FOLDER}/sample-1.inp" ]; then
-        SAMPLES=("${SAMPLES_FOLDER}"/sample-*.inp)
-    else
+        JUTGE_SAMPLES=("${SAMPLES_FOLDER}"/sample-*.inp)
+    fi
+
+    local USER_SAMPLES=""
+    if [ -f "$(pwd)/sample.inp" ]; then
+        USER_SAMPLES="$(pwd)/sample.inp"
+    elif [ -f "$(pwd)/sample-1.inp" ]; then
+        USER_SAMPLES=("$(pwd)"/sample-*.inp)
+    fi
+
+    if [ "${JUTGE_SAMPLES}" = "" ] && [ "${USER_SAMPLES}" = "" ]; then
         echo -e "${AV_ORANGE}WARNING: No tests were found!${AV_NC}"
     fi
 
@@ -190,10 +199,10 @@ advocat () {
     # Run each test
     local PASS_COUNT=0
     local TEST_COUNT=0
-    for TEST_INPUT in ${SAMPLES}
+    for TEST_INPUT in ${JUTGE_SAMPLES} ${USER_SAMPLES}
     do
         TEST_COUNT=$((TEST_COUNT + 1))
-        _advocat_run_test "$TEST_COUNT" "${BINARY}" "${TEST_INPUT}" "${TEST_INPUT%.*}.cor" "${SKIP_TESTS}"
+        __advocat_run_test "$TEST_COUNT" "${BINARY}" "${TEST_INPUT}" "${TEST_INPUT%.*}.cor" "${SKIP_TESTS}"
         PASS_COUNT=$((PASS_COUNT + $?))
     done
     echo
@@ -202,7 +211,7 @@ advocat () {
     if [ "${SKIP_TESTS}" = 1 ]; then
         echo -e -n "${AV_RED}Your code doesn't compile! "
     elif [ "${TEST_COUNT}" = 0 ]; then
-        echo -e -n "${AV_ORANGE}Your code compiles but you should test it before submitting. "
+        echo -e -n "${AV_ORANGE}Your code compiles but you should test it before submitting. Try to add some tests to the folder."
     elif [ "$PASS_COUNT" = "$TEST_COUNT" ]; then
         echo -e -n "${AV_GREEN}You're ready to submit your code to jutge.org! "
     else

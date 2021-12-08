@@ -211,7 +211,7 @@ advocat () {
     if [ "${SKIP_TESTS}" = 1 ]; then
         echo -e -n "${AV_RED}Your code doesn't compile! "
     elif [ "${TEST_COUNT}" = 0 ]; then
-        echo -e -n "${AV_ORANGE}Your code compiles but you should test it before submitting. Try to add some tests to the folder."
+        echo -e -n "${AV_ORANGE}Your code compiles but you should test it before submitting. Try to add some tests to the folder. "
     elif [ "$PASS_COUNT" = "$TEST_COUNT" ]; then
         echo -e -n "${AV_GREEN}You're ready to submit your code to jutge.org! "
     else

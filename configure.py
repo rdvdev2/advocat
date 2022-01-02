@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from ninja_syntax import Writer
 
 COMPILER = "g++"
-APP_VERSION = "2.0"
+APP_VERSION = "2.1"
 
 INCLUDES_REGEX = re.compile('#include\s+"(.*)"')
 

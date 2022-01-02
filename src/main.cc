@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include <unistd.h>
 
 #include "colors.h"
 #include "problem.h"
@@ -15,13 +16,19 @@
 
 using namespace std;
 
-int main(int argc, char** argv) {
+const int BUFFSIZE = 1024;
+
+int main() {
     cout << "Advocat v" << APP_VERSION << " by Roger Díaz Viñolas (rdvdev2@gmail.com)" << endl;
 
-    if (argc < 1) {
+    char buf[BUFFSIZE];
+    auto len = readlink("/proc/self/exe", buf, BUFFSIZE);
+    if (len != -1) buf[len] = '\0';
+    else {
         show_error("Can't find the templates");
+        return 1;
     }
-    filesystem::path binary_dir = filesystem::path(argv[0]).parent_path();
+    filesystem::path binary_dir = filesystem::path(buf).parent_path();
 
     Problem p;
     filesystem::path cwd = filesystem::current_path();

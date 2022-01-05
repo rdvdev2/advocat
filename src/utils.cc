@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <algorithm>
 #include <string>
 
 #include "utils.h"
@@ -20,25 +21,21 @@ void show_warning(const string& description) {
     cerr << ORANGE << "WARNING: " << description << NO_COLOR << endl;
 }
 
-// D: Done; S: Skip; F: Fail; I: In progress
-void show_progress(const string& name, char result) {
-    switch (result) {
-        case 'D': cout << YELLOW << name << GREEN << " DONE ✓" << NO_COLOR << endl; break;
-        case 'S': cout << YELLOW << name << CYAN  << " SKIP ✓" << NO_COLOR << endl; break;
-        case 'F': cout << YELLOW << name << RED   << " FAIL ✘" << NO_COLOR << endl; break;
-        case 'I': cout << YELLOW << name << NO_COLOR << "\r" << flush; break;
+void show_task_status(string name, TaskType type, TaskStatus status) {
+    switch (type) {
+        case TaskType::Fetch: name.append("... "); break;
+        case TaskType::Test: transform(name.begin(), name.end(), name.begin(), ::toupper); name.append(": "); break;
     }
-}
+    cout << YELLOW << name;
 
-// P: Pass; S: Skip; F: Fail; I: In progress
-void show_result(const string& name, char veredict) {
-    switch (veredict) {
-        case 'P': cout << YELLOW << name << ": " << GREEN << "PASS ✓" << NO_COLOR << endl; break;
-        case 'S': cout << YELLOW << name << ": " << CYAN  << "SKIP ✘" << NO_COLOR << endl; break;
-        case 'F': cout << YELLOW << name << ": " << RED   << "FAIL ✘" << NO_COLOR << endl; break;
-        case 'I': cout << YELLOW << name << ": " << NO_COLOR << "..." << "\r" << flush; break;
+    switch (status) {
+        case TaskStatus::Done:       cout << GREEN    << "DONE ✓" << NO_COLOR << endl; break;
+        case TaskStatus::Pass:       cout << GREEN    << "PASS ✓" << NO_COLOR << endl; break;
+        case TaskStatus::SkipGood:   cout << CYAN     << "SKIP ✓" << NO_COLOR << endl; break;
+        case TaskStatus::SkipBad:    cout << CYAN     << "SKIP ✘" << NO_COLOR << endl; break;
+        case TaskStatus::Fail:       cout << RED      << "FAIL ✘" << NO_COLOR << endl; break;
+        case TaskStatus::InProgress: cout << NO_COLOR << "... \r" << flush;            break;
     }
-    
 }
 
 void show_details(const string& title, const string& details) {

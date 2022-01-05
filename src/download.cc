@@ -11,9 +11,9 @@ const string UNZIP_TEMPLATE_0 = "unzip -joq ";
 const string UNZIP_TEMPLATE_1 = " \"**/sample*\" -d ";
 const string SILENT_TEMPLATE = " > /dev/null 2> /dev/null";
 
-const string DOWNLOAD_ZIP_TEXT = "Downloading tests...";
-const string DOWNLOAD_MAIN_CC_TEXT = "Downloading main.cc...";
-const string EXTRACT_TESTS_TEXT = "Extracting tests...";
+const string DOWNLOAD_ZIP_TEXT = "Downloading tests";
+const string DOWNLOAD_MAIN_CC_TEXT = "Downloading main.cc";
+const string EXTRACT_TESTS_TEXT = "Extracting tests";
 
 bool download_file(const string& url, const filesystem::path path) {
     string command = WGET_TEMPLATE + path.string() + " " + url + SILENT_TEMPLATE;
@@ -28,67 +28,67 @@ bool unzip_file(const filesystem::path zip_path, const filesystem::path output_p
 }
 
 bool download_zip(const Problem& p) {
-    show_progress(DOWNLOAD_ZIP_TEXT, 'I');
+    show_task_status(DOWNLOAD_ZIP_TEXT, TaskType::Fetch, TaskStatus::InProgress);
 
     filesystem::path path = p.advocat_dir / "problem.zip";
 
     if (filesystem::exists(path)) {
-        show_progress(DOWNLOAD_ZIP_TEXT, 'S');
+        show_task_status(DOWNLOAD_ZIP_TEXT, TaskType::Fetch, TaskStatus::SkipGood);
         return true;
     }
 
     if (p.is_private) {
-        show_progress(DOWNLOAD_ZIP_TEXT, 'S');
+        show_task_status(DOWNLOAD_ZIP_TEXT, TaskType::Fetch, TaskStatus::SkipBad);
         return false;
     }
 
     bool success = download_file(p.zip_url, path);
-    show_progress(DOWNLOAD_ZIP_TEXT, success ? 'D' : 'F');
+    show_task_status(DOWNLOAD_ZIP_TEXT, TaskType::Fetch,success ? TaskStatus::Done : TaskStatus::Fail);
     return success;
 }
 
 bool download_main_cc(const Problem& p) {
-    show_progress(DOWNLOAD_MAIN_CC_TEXT, 'I');
+    show_task_status(DOWNLOAD_MAIN_CC_TEXT, TaskType::Fetch, TaskStatus::InProgress);
 
     if (p.has_main) {
-        show_progress(DOWNLOAD_MAIN_CC_TEXT, 'S');
+        show_task_status(DOWNLOAD_MAIN_CC_TEXT, TaskType::Fetch, TaskStatus::SkipGood);
         return true;
     }
 
     filesystem::path path = p.advocat_dir / "main.cc";
 
     if (filesystem::exists(path)) {
-        show_progress(DOWNLOAD_MAIN_CC_TEXT, 'S');
+        show_task_status(DOWNLOAD_MAIN_CC_TEXT, TaskType::Fetch, TaskStatus::SkipGood);
         return true;
     }
 
     if (p.is_private) {
-        show_progress(DOWNLOAD_MAIN_CC_TEXT, 'S');
+        show_task_status(DOWNLOAD_MAIN_CC_TEXT, TaskType::Fetch, TaskStatus::SkipBad);
         return false;
     }
 
     bool success = download_file(p.main_cc_url, path);
-    show_progress(DOWNLOAD_MAIN_CC_TEXT, success ? 'D' : 'F');
+    show_task_status(DOWNLOAD_MAIN_CC_TEXT, TaskType::Fetch, success ? TaskStatus::Done : TaskStatus::Fail);
     return success;
 }
 
 bool extract_tests(const Problem& p) {
-    show_progress(EXTRACT_TESTS_TEXT, 'I');
+    show_task_status(EXTRACT_TESTS_TEXT, TaskType::Fetch, TaskStatus::InProgress);
 
     filesystem::path zip_path = p.advocat_dir / "problem.zip";
     filesystem::path tests_path = p.advocat_dir / "tests";
 
     if (filesystem::exists(tests_path)) {
-        show_progress(EXTRACT_TESTS_TEXT, 'S');
+        show_task_status(EXTRACT_TESTS_TEXT, TaskType::Fetch, TaskStatus::SkipGood);
         return true;
     }
 
     if (not filesystem::exists(zip_path)) {
-        show_progress(EXTRACT_TESTS_TEXT, 'S');
+        show_task_status(EXTRACT_TESTS_TEXT, TaskType::Fetch, TaskStatus::SkipBad);
         return false;
     }
 
     bool success = unzip_file(zip_path, tests_path);
-    show_progress(EXTRACT_TESTS_TEXT, success ? 'D' : 'F');
+    show_task_status(EXTRACT_TESTS_TEXT, TaskType::Fetch, success ? TaskStatus::Done : TaskStatus::Fail);
     return success;
 }

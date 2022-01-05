@@ -5,7 +5,7 @@
 
 using namespace std;
 
-const string COMPILATION_TEXT = "COMPILATION";
+const string COMPILATION_TEXT = "Compilation";
 
 bool compile_file(const Compiler& compiler, const filesystem::path& source, const filesystem::path& output) {
     if (not filesystem::exists(source)) return false;
@@ -49,11 +49,11 @@ bool compile_binary(const Problem& p, const filesystem::path& templates_dir) {
 }
 
 bool compile_problem(const Problem& p, const filesystem::path& templates_dir) {
-    show_result(COMPILATION_TEXT, 'I');
+    show_task_status(COMPILATION_TEXT, TaskType::Test, TaskStatus::InProgress);
 
     bool compiles = check_p1xx_compiles(p) and compile_binary(p, templates_dir);
 
-    show_result(COMPILATION_TEXT, compiles ? 'P' : 'F');
+    show_task_status(COMPILATION_TEXT, TaskType::Test, compiles ? TaskStatus::Pass : TaskStatus::Fail);
 
     if (not compiles) {
         string details;

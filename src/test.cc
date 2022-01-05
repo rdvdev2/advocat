@@ -34,10 +34,10 @@ int run_testsuit(const string& suitname, const Testsuit& tests, const Problem& p
 
     for (int i = 0; i < test_count; ++i) {
         string testname = suitname + " " + to_string(i+1);
-        show_result(testname, 'I');
+        show_task_status(testname, TaskType::Test, TaskStatus::InProgress);
 
         if (not filesystem::exists(p.output)) {
-            show_result(testname, 'S');
+            show_task_status(testname, TaskType::Test, TaskStatus::SkipBad);
             continue;
         }
         
@@ -53,10 +53,10 @@ int run_testsuit(const string& suitname, const Testsuit& tests, const Problem& p
         read_file(diff, diff_contents);
         
         if (diff_contents.empty()) {
-            show_result(testname, 'P');
+            show_task_status(testname, TaskType::Test, TaskStatus::Pass);
             ++pass_count;
         } else {
-            show_result(testname, 'F');
+            show_task_status(testname, TaskType::Test, TaskStatus::Fail);
 
             command = "diff -y " + tests[i].outputs.string() + " " + tests[i].tmpfile.string() + " > " + diff.string();
             system(command.c_str());

@@ -71,7 +71,7 @@ int main() {
     }
 
     Testsuit problem_tests, user_tests;
-    find_tests(p.advocat_dir / "tests", problem_tests);
+    if (tests) find_tests(p.advocat_dir / "tests", problem_tests);
     find_tests(cwd, user_tests);
 
     int test_count = problem_tests.size() + user_tests.size();

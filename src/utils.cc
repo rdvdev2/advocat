@@ -13,12 +13,15 @@ void read_file(const filesystem::path& file, string& contents) {
     contents = string(istreambuf_iterator<char>(input_file), istreambuf_iterator<char>());
 }
 
-void show_error(const string& description) {
-    cerr << RED << "ERROR: " << description << NO_COLOR << endl;
-}
+void print_message(MessageType type, const string& message) {
+    if (type > LOG_LEVEL) return;
 
-void show_warning(const string& description) {
-    cerr << ORANGE << "WARNING: " << description << NO_COLOR << endl;
+    switch (type) {
+        case MessageType::Debug: cerr << ":: " << message << endl; break;
+        case MessageType::Info: cout << message << endl; break;
+        case MessageType::Warning: cerr << ORANGE << "WARNING: " << message << NO_COLOR << endl; break;
+        case MessageType::Error: cerr << RED << "ERROR: " << message << NO_COLOR << endl; break;
+    }
 }
 
 void show_task_status(string name, TaskType type, TaskStatus status) {

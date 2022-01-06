@@ -19,13 +19,14 @@ using namespace std;
 const int BUFFSIZE = 1024;
 
 int main() {
-    cout << "Advocat v" << APP_VERSION << " by Roger Díaz Viñolas (rdvdev2@gmail.com)" << endl;
+    INFO("Advocat v" + string(APP_VERSION) + " by Roger Díaz Viñolas (rdvdev2@gmail.com)");
+    DEBUG("Debug mode ON: To supress verbose output remove the --debug flag");
 
     char buf[BUFFSIZE];
     auto len = readlink("/proc/self/exe", buf, BUFFSIZE);
     if (len != -1) buf[len] = '\0';
     else {
-        show_error("Can't find the templates");
+        ERROR("Can't find the templates");
         return 1;
     }
     filesystem::path binary_dir = filesystem::path(buf).parent_path();
@@ -36,7 +37,7 @@ int main() {
 
     string error = verify_problem(p);
     if (not error.empty()) {
-        show_error(error);
+        ERROR(error);
         return 1;
     }
 
@@ -45,7 +46,7 @@ int main() {
 
     if (p.is_private) {
         cout << endl;
-        show_warning("This problem isn't public! No tests or main() will be downloaded!");
+        WARN("This problem isn't public! No tests or main() will be downloaded!");
         cout << endl;
     }
 
@@ -55,19 +56,19 @@ int main() {
 
     if (not zip and p.is_private) {
         cerr << endl;
-        show_warning("Unable to retrieve tests!");
+        WARN("Unable to retrieve tests!");
         cerr << "You can manually download the problem zip from [" << p.zip_url << "] and save it as [" << p.advocat_dir.string() << "/problem.zip]." << endl;
     }
 
     if (not main_cc) {
         cerr << endl;
-        show_error("Unable to retrive the main.cc file!");
+        ERROR("Unable to retrive the main.cc file!");
         cerr << "You can manually download the main.cc file from [" << p.main_cc_url << "] and save it as [" << p.advocat_dir.string() << "/main.cc]." << endl;
     }
 
     if (not tests and not p.is_private) {
         cerr << endl;
-        show_warning("Unable to unzip tests!");
+        WARN("Unable to unzip tests!");
     }
 
     Testsuit problem_tests, user_tests;
@@ -77,10 +78,11 @@ int main() {
     int test_count = problem_tests.size() + user_tests.size();
     if (test_count == 0) {
         cerr << endl;
-        show_warning("No tests were found!");
+        WARN("No tests were found!");
     }
     
-    cout << endl << "Compiling and running tests..." << endl;
+    cout << endl;
+    INFO("Compiling and running tests...");
 
     bool compiles = compile_problem(p, binary_dir);
     int pass_count = run_testsuit("PUBLIC TEST", problem_tests, p);

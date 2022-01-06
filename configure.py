@@ -20,6 +20,13 @@ def main():
         dest="install-dir",
         default=os.getenv("HOME") + "/.advocat/program",
         help="Where to install the program (defaults to $HOME/.advocat/program)")
+    parser.add_argument(
+        "--debug",
+        required=False,
+        dest="debug",
+        action="store_true",
+        help="Enable debug messages on the compiled binary (Really verbose!)"
+    )
     args = vars(parser.parse_args())
 
     with open('build.ninja', 'w') as f:
@@ -40,7 +47,10 @@ def main():
         compiler = os.popen("which " + COMPILER).read()
         w.comment("Compilers and flags")
         w.variable("cxx_compiler", compiler)
-        w.variable("cxx_flags", "-O2 -Wall -Wextra -Werror -Wno-sign-compare -Wshadow -DAPP_VERSION=\"\\\"" + APP_VERSION + "\"\\\"")
+        cxx_flags = "-O2 -Wall -Wextra -Werror -Wno-sign-compare -Wshadow -DAPP_VERSION=\"\\\"" + APP_VERSION + "\"\\\""
+        if args["debug"]:
+            cxx_flags += " -DADVOCAT_DEBUG"
+        w.variable("cxx_flags", cxx_flags)
         w.variable("ld_flags", "-O2 -Wall -Wextra -Werror -Wno-sign-compare -Wshadow")
         w.newline()
 

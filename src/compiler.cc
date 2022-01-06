@@ -8,34 +8,50 @@ using namespace std;
 const string COMPILATION_TEXT = "Compilation";
 
 bool compile_file(const Compiler& compiler, const filesystem::path& source, const filesystem::path& output) {
-    if (not filesystem::exists(source)) return false;
+    DEBUG("Compiling " + source.string() + " to " + output.string());
+    if (not filesystem::exists(source)) {
+        DEBUG(source.string() + " doesn't exist!");
+        return false;
+    }
     filesystem::path errors = output.parent_path() / "compilation.err";
     
-    if (filesystem::exists(output)) filesystem::remove(output);
+    if (filesystem::exists(output)) {
+        DEBUG("Removing previous compilation output: " + output.string());
+        filesystem::remove(output);
+    }
     string command = compiler.command + " " + compiler.flags + " -c " + source.string() + " -o " + output.string() + " 2> " + errors.string();
-    system(command.c_str());
+    run_system_command(command);
 
     return filesystem::exists(output);
 }
 
 bool link_file(const Compiler& compiler, const filesystem::path& source, const filesystem::path& output) {
-    if (not filesystem::exists(source)) return false;
+    DEBUG("Linking " + source.string() + " to " + output.string());
+    if (not filesystem::exists(source)) {
+        DEBUG(source.string() + " doesn't exist!");
+        return false;
+    }
     filesystem::path errors = output.parent_path() / "compilation.err";
 
-    if (filesystem::exists(output)) filesystem::remove(output);
+    if (filesystem::exists(output)) {
+        DEBUG("Removing previous linking output: " + output.string());
+        filesystem::remove(output);
+    }
     string command = compiler.command + " " + compiler.flags + " " + source.string() + " -o " + output.string() + " 2> " + errors.string();;
-    system(command.c_str());
+    run_system_command(command);
 
     return filesystem::exists(output);
 }
 
 bool check_p1xx_compiles(const Problem& p) {
+    DEBUG("Checking if P1++ compiles the user's main.cc...");
     filesystem::path object_file = p.advocat_dir / "main.o";
 
     return compile_file(P1XX, p.source, object_file);
 }
 
 bool compile_binary(const Problem& p, const filesystem::path& templates_dir) {
+    DEBUG("Compiling the binary for testing with G++...");
     filesystem::path joined_source = p.advocat_dir / "joined.cc";
 
     string template_name;

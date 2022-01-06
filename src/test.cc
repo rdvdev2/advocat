@@ -11,6 +11,8 @@ int compare_tests(const Test& a, const Test& b) {
 }
 
 void find_tests(const filesystem::path& folder, Testsuit& tests) {
+    DEBUG("Searching for tests in " + folder.string());
+
     for (auto& file: filesystem::recursive_directory_iterator(folder)) {
         if (file.path().extension() == ".inp") {
             Test t {
@@ -21,11 +23,19 @@ void find_tests(const filesystem::path& folder, Testsuit& tests) {
             t.outputs.replace_extension(".cor");
             t.tmpfile.replace_extension(".out");
             
-            if (filesystem::exists(t.outputs)) tests.push_back(t);
+            if (filesystem::exists(t.outputs)) {
+                tests.push_back(t);
+                DEBUG("Test found! Details:");
+                DEBUG("-> inputs: " + t.inputs.string());
+                DEBUG("-> outputs: " + t.outputs.string());
+                DEBUG("-> tmpfile: " + t.tmpfile.string());
+            }
         }
     }
 
+    DEBUG("Sorting tests...");
     sort(tests.begin(), tests.end(), compare_tests);
+    DEBUG("Tests sorted");
 }
 
 int run_testsuit(const string& suitname, const Testsuit& tests, const Problem& p) {
@@ -41,13 +51,15 @@ int run_testsuit(const string& suitname, const Testsuit& tests, const Problem& p
             continue;
         }
         
+        DEBUG("Running test...");
         string command = p.output.string() + " < " + tests[i].inputs.string() + " > " + tests[i].tmpfile.string();
-        system(command.c_str());
+        run_system_command(command);
 
         filesystem::path diff = filesystem::temp_directory_path() / "sample.diff";
 
+        DEBUG("Verifying output...");
         command = "diff -q " + tests[i].outputs.string() + " " + tests[i].tmpfile.string() + " > " + diff.string();
-        system(command.c_str());
+        run_system_command(command);
 
         string diff_contents;
         read_file(diff, diff_contents);
@@ -58,8 +70,9 @@ int run_testsuit(const string& suitname, const Testsuit& tests, const Problem& p
         } else {
             show_task_status(testname, TaskType::Test, TaskStatus::Fail);
 
+            DEBUG("Getting output diff...");
             command = "diff -y " + tests[i].outputs.string() + " " + tests[i].tmpfile.string() + " > " + diff.string();
-            system(command.c_str());
+            run_system_command(command);
             read_file(diff, diff_contents);
 
             show_details("Expected output vs your output", diff_contents);

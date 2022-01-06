@@ -9,8 +9,15 @@
 using namespace std;
 
 void read_file(const filesystem::path& file, string& contents) {
+    DEBUG("Reading " + file.string() + " to a string...");
     ifstream input_file(file);
     contents = string(istreambuf_iterator<char>(input_file), istreambuf_iterator<char>());
+    DEBUG("Done reading");
+}
+
+void run_system_command(const string& command) {
+    DEBUG("Executing command: " + command);
+    system(command.c_str());
 }
 
 void print_message(MessageType type, const string& message) {
@@ -39,6 +46,8 @@ void show_task_status(string name, TaskType type, TaskStatus status) {
         case TaskStatus::Fail:       cout << RED      << "FAIL ✘" << NO_COLOR << endl; break;
         case TaskStatus::InProgress: cout << NO_COLOR << "... \r" << flush;            break;
     }
+
+    if (status == TaskStatus::InProgress and LOG_LEVEL >= MessageType::Debug) cout << endl;
 }
 
 void show_details(const string& title, const string& details) {

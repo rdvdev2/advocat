@@ -22,6 +22,7 @@ int main() {
     INFO("Advocat v" + string(APP_VERSION) + " by Roger Díaz Viñolas (rdvdev2@gmail.com)");
     DEBUG("Debug mode ON: To supress verbose output remove the --debug flag");
 
+    DEBUG("Searching the binary directory...");
     char buf[BUFFSIZE];
     auto len = readlink("/proc/self/exe", buf, BUFFSIZE);
     if (len != -1) buf[len] = '\0';
@@ -30,6 +31,7 @@ int main() {
         return 1;
     }
     filesystem::path binary_dir = filesystem::path(buf).parent_path();
+    DEBUG("Found the binary on " + binary_dir.string());
 
     Problem p;
     filesystem::path cwd = filesystem::current_path();
@@ -42,7 +44,10 @@ int main() {
     }
 
     gather_problem_info(p);
-    if (not filesystem::exists(p.advocat_dir)) filesystem::create_directories(p.advocat_dir);
+    if (not filesystem::exists(p.advocat_dir)) {
+        DEBUG("Creating the problem directory: " + p.advocat_dir.string());
+        filesystem::create_directories(p.advocat_dir);
+    }
 
     if (p.is_private) {
         cout << endl;
@@ -71,9 +76,11 @@ int main() {
         WARN("Unable to unzip tests!");
     }
 
+    DEBUG("Searching for tests...");
     Testsuit problem_tests, user_tests;
     if (tests) find_tests(p.advocat_dir / "tests", problem_tests);
     find_tests(cwd, user_tests);
+    DEBUG("Test search finished");
 
     int test_count = problem_tests.size() + user_tests.size();
     if (test_count == 0) {
@@ -99,4 +106,6 @@ int main() {
         cout << GREEN << "You're ready to submit your code to jutge.org!";
     }
     cout << " (" << pass_count << " out of " << test_count << " tests passed)" << NO_COLOR << endl;
+
+    DEBUG("Clean end! Hooray!");
 }

@@ -77,12 +77,15 @@ int main() {
     }
 
     DEBUG("Searching for tests...");
-    Testsuit problem_tests, user_tests;
-    if (tests) find_tests(p.advocat_dir / "tests", problem_tests);
-    find_tests(cwd, user_tests);
+    Testsuit public_testsuit, user_testsuit;
+    public_testsuit.name = "public";
+    user_testsuit.name = "user";
+
+    if (tests) find_tests(p.advocat_dir / "tests", p, public_testsuit);
+    find_tests(cwd, p, user_testsuit);
     DEBUG("Test search finished");
 
-    int test_count = problem_tests.size() + user_tests.size();
+    int test_count = public_testsuit.tests.size() + user_testsuit.tests.size();
     if (test_count == 0) {
         cerr << endl;
         WARN("No tests were found!");
@@ -92,13 +95,13 @@ int main() {
     INFO("Compiling and running tests...");
 
     bool compiles = compile_problem(p, binary_dir);
-    int pass_count = run_testsuit("PUBLIC TEST", problem_tests, p);
-    pass_count += run_testsuit("USER TEST", user_tests, p);
+    int pass_count = run_testsuit(p, public_testsuit);
+    pass_count += run_testsuit(p, user_testsuit);
 
     cout << endl;
     if (not compiles) {
         cout << RED << "Your code doesn't compile!";
-    } else if (problem_tests.empty() and user_tests.empty()) {
+    } else if (public_testsuit.tests.empty() and user_testsuit.tests.empty()) {
         cout << ORANGE << "Your code compiles but you should test it before submitting. Try to add some tests to the folder.";
     } else if (pass_count != test_count) {
         cout << RED << "DON'T submit your code to jutge.org!";

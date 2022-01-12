@@ -11,8 +11,11 @@ struct Test {
     std::filesystem::path tmpfile;
 };
 
-typedef std::vector<Test> Testsuit;
+struct Testsuit {
+    std::string name;
+    std::vector<Test> tests;
+};
 
-void find_tests(const std::filesystem::path& folder, Testsuit& tests);
+void find_tests(const std::filesystem::path& folder, const Problem& p, Testsuit& testsuit);
 
-int run_testsuit(const std::string& suitname, const Testsuit& tests, const Problem& p);
+int run_testsuit(const Problem& p, const Testsuit& testsuit);

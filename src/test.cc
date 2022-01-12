@@ -50,6 +50,11 @@ int run_testsuit(const string& suitname, const Testsuit& tests, const Problem& p
             show_task_status(testname, TaskType::Test, TaskStatus::SkipBad);
             continue;
         }
+
+        if (filesystem::exists(tests[i].tmpfile)) {
+            DEBUG("Removing previous output: " + tests[i].tmpfile.string());
+            filesystem::remove(tests[i].tmpfile);
+        }
         
         DEBUG("Running test...");
         string command = p.output.string() + " < " + tests[i].inputs.string() + " > " + tests[i].tmpfile.string();

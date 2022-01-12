@@ -25,9 +25,8 @@ bool compile_file(const Compiler& compiler, const filesystem::path& source, cons
     }
 
     string command = compiler.command + " " + compiler.flags + " -c " + source.string() + " -o " + output.string() + " 2> " + errors.string();
-    run_system_command(command);
-
-    return filesystem::exists(output);
+    
+    return run_system_command(command) == 0 and filesystem::exists(output);
 }
 
 bool link_file(const Compiler& compiler, const filesystem::path& source, const filesystem::path& output, const filesystem::path& errors) {
@@ -48,9 +47,8 @@ bool link_file(const Compiler& compiler, const filesystem::path& source, const f
     }
 
     string command = compiler.command + " " + compiler.flags + " " + source.string() + " -o " + output.string() + " 2> " + errors.string();;
-    run_system_command(command);
-
-    return filesystem::exists(output);
+    
+    return run_system_command(command) == 0 and filesystem::exists(output);
 }
 
 bool check_p1xx_compiles(const Problem& p, filesystem::path& errors) {

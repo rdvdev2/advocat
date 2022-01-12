@@ -18,15 +18,15 @@ const string EXTRACT_TESTS_TEXT = "Extracting tests";
 bool download_file(const string& url, const filesystem::path path) {
     DEBUG("Downloading " + url + " to " + path.string());
     string command = WGET_TEMPLATE + path.string() + " " + url + SILENT_TEMPLATE;
-    run_system_command(command);
-    return filesystem::exists(path);
+
+    return run_system_command(command) == 0 and filesystem::exists(path);
 }
 
 bool unzip_file(const filesystem::path zip_path, const filesystem::path output_path) {
     DEBUG("Extracting " + zip_path.string() + " to " + output_path.string());
     string command = UNZIP_TEMPLATE_0 + zip_path.string() + UNZIP_TEMPLATE_1 + output_path.string() + SILENT_TEMPLATE;
-    run_system_command(command);
-    return filesystem::exists(output_path);
+
+    return run_system_command(command) == 0 and filesystem::exists(output_path);
 }
 
 bool download_zip(const Problem& p) {

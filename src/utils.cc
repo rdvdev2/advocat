@@ -15,9 +15,12 @@ void read_file(const filesystem::path& file, string& contents) {
     DEBUG("Done reading");
 }
 
-void run_system_command(const string& command) {
+int run_system_command(const string& command) {
     DEBUG("Executing command: " + command);
-    system(command.c_str());
+    int ret = system(command.c_str());
+    
+    DEBUG("Exit code: " + to_string(ret));
+    return ret;
 }
 
 void print_message(MessageType type, const string& message) {

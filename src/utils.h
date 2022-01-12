@@ -10,7 +10,7 @@ enum struct TaskStatus { Done, Pass, SkipGood, SkipBad, Fail, InProgress };
 
 void read_file(const std::filesystem::path& file, std::string& contents);
 
-void run_system_command(const std::string& command);
+int run_system_command(const std::string& command);
 
 void print_message(MessageType type, const std::string& message);
 #define DEBUG(msg) print_message(MessageType::Debug, msg)

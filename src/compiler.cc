@@ -87,6 +87,11 @@ bool compile_problem(const Problem& p, const filesystem::path& templates_dir) {
     show_task_status(COMPILATION_TEXT, TaskType::Test, compiles ? TaskStatus::Pass : TaskStatus::Fail);
 
     if (not compiles) {
+        if (filesystem::exists(p.output)) {
+            DEBUG("Removing invalid compilation output, as it shouldn't be tested: " + p.output.string());
+            filesystem::remove(p.output);
+        }
+
         string details;
         read_file(errors, details);
         show_details("Compilation output", details);

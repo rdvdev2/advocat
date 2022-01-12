@@ -65,24 +65,23 @@ int run_testsuit(const Problem& p, const Testsuit& testsuit) {
         string command = p.output.string() + " < " + testsuit.tests[i].inputs.string() + " > " + testsuit.tests[i].tmpfile.string();
         run_system_command(command);
 
-        filesystem::path diff = filesystem::temp_directory_path() / "sample.diff";
+        filesystem::path diff = testsuit.tests[i].tmpfile;
+        diff.replace_extension("diff");
 
         DEBUG("Verifying output...");
-        command = "diff -q " + testsuit.tests[i].outputs.string() + " " + testsuit.tests[i].tmpfile.string() + " > " + diff.string();
-        run_system_command(command);
+        command = "diff -y " + testsuit.tests[i].outputs.string() + " " + testsuit.tests[i].tmpfile.string() + " > " + diff.string();
+        int diff_ret = run_system_command(command);
 
-        string diff_contents;
-        read_file(diff, diff_contents);
         
-        if (diff_contents.empty()) {
+        if (diff_ret == 0) {
             show_task_status(testname, TaskType::Test, TaskStatus::Pass);
             ++pass_count;
         } else {
             show_task_status(testname, TaskType::Test, TaskStatus::Fail);
 
             DEBUG("Getting output diff...");
-            command = "diff -y " + testsuit.tests[i].outputs.string() + " " + testsuit.tests[i].tmpfile.string() + " > " + diff.string();
-            run_system_command(command);
+
+            string diff_contents;
             read_file(diff, diff_contents);
 
             show_details("Expected output vs your output", diff_contents);

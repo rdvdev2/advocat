@@ -10,8 +10,6 @@ from ninja_syntax import Writer
 COMPILER = "g++"
 APP_VERSION = "2.2-dev"
 
-INCLUDES_REGEX = re.compile('#include\s+"(.*)"')
-
 def main():
     parser = ArgumentParser()
     parser.add_argument(
@@ -38,7 +36,7 @@ def main():
         w.newline()
         w.newline()
 
-        w.variable("ninja_required_version", "1.2")
+        w.variable("ninja_required_version", "1.3")
         w.variable("srcdir", "src")
         w.variable("templatesdir", "templates")
         w.variable("builddir", "build")
@@ -55,7 +53,7 @@ def main():
         w.newline()
 
         w.comment("Rules")
-        w.rule("cxx", "$cxx_compiler $cxx_flags -c $in -o $out", description="CXX $out <- $in")
+        w.rule("cxx", "$cxx_compiler -MD -MF $out.d $cxx_flags -c $in -o $out", description="CXX $out <- $in", depfile="$out.d", deps="gcc")
         w.rule("ld", "$cxx_compiler $ld_flags $in -o $out", description="LD $out <- $in")
         w.rule("cp", "cp $in $out", description="CP $out <- $in")
         w.newline()
@@ -65,15 +63,8 @@ def main():
         for file in glob("src/*.cc"):
             inputs = "$srcdir/" + file[4:]
             outputs = "$builddir/" + file[4:len(file)-3] + ".o"
-            
-            implicit = []
-            source_file = open(file, "r")
-            matches = INCLUDES_REGEX.findall(source_file.read())
-            source_file.close()
-            for match in matches:
-                implicit.append("$srcdir/" + match)
 
-            w.build(outputs, "cxx", inputs, implicit)
+            w.build(outputs, "cxx", inputs)
             objects.append(outputs)
         
         w.newline()

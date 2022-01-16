@@ -52,4 +52,4 @@ Alguns problemes al jutge no tenen tests públics, o potser vols afegir al teu j
 És important vigilar les línies en blanc al final del arxiu ```.cor```, ja que si hi ha una línia en blanc al final del arxiu el test només es considerarà correcte si el programa també produeix una línia en blanc. En el cas d'escriure tests per a un problema de procediment (sense ```main()```) es recomana comprovar l'arxiu ```~/.advocat/ID_PROBLEMA/main.cc``` per saber com es llegirà l'entrada.
 
 ## Llicències del codi font
-Les plantilles de la carpeta `templates/`, així com els procediments per a compilar els programes són adaptats del repositori [jutge-org/jutge-driver-std](https://github.com/jutge-org/jutge-driver-std).
+Les plantilles de la carpeta `src/templates/`, així com els procediments per a compilar els programes són adaptats del repositori [jutge-org/jutge-driver-std](https://github.com/jutge-org/jutge-driver-std).

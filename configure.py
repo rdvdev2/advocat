@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 from ninja_syntax import Writer
 
 COMPILER = "g++"
-APP_VERSION = "2.2-dev"
+APP_VERSION = "2.2"
 
 def write_generator_header(w):
     w.newline()

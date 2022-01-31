@@ -4,7 +4,9 @@ use std::fs;
 use std::io;
 
 use regex::Regex;
+use crate::debug;
 
+#[derive(Debug)]
 pub struct Problem {
     pub id: String,
     pub source: path::PathBuf,
@@ -129,6 +131,7 @@ fn verify_id(id: String) -> Result<String, IdError> {
 }
 
 fn file_has_main(path: &path::Path) -> Result<bool, SourceError> {
+    debug!("Attempting to read {}", path.to_string_lossy());
     if !path.exists() {
         Err(SourceError::NonExistingPath)
     } else if !path.is_file() {
@@ -136,6 +139,7 @@ fn file_has_main(path: &path::Path) -> Result<bool, SourceError> {
     } else {
         let contents = fs::read_to_string(path)
             .map_err(SourceError::CantRead)?;
+        debug!("Done reading {}", path.to_string_lossy());
         let re = Regex::new(r"int\s+main\s*(\s*)").unwrap();
         Ok(re.is_match(&contents))
     }

@@ -31,7 +31,7 @@ enum UnzipError {
     ZipError(zip::result::ZipError)
 }
 
-fn unzip_file(zip_path: &path::Path, output_folder: &path::Path) -> Result<(), UnzipError> {
+fn unzip_samples(zip_path: &path::Path, output_folder: &path::Path) -> Result<(), UnzipError> {
     debug!("Unzipping {} to {}", zip_path.to_string_lossy(), output_folder.to_string_lossy());
 
     let zip_file = fs::File::open(zip_path)
@@ -41,7 +41,7 @@ fn unzip_file(zip_path: &path::Path, output_folder: &path::Path) -> Result<(), U
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
-        let outpath = match file.enclosed_name() {
+        let outpath = match filter_samples(&file) {
             Some(path) => output_folder.join(path),
             None => continue
         };
@@ -63,6 +63,19 @@ fn unzip_file(zip_path: &path::Path, output_folder: &path::Path) -> Result<(), U
     Ok(())
 }
 
+fn filter_samples(zipfile: &zip::read::ZipFile) -> Option<path::PathBuf> {
+    let path = zipfile.enclosed_name()?;
+    if let Some(filename) = path.file_name() {
+        if zipfile.is_file() && filename.to_string_lossy().starts_with("sample") {
+            Some(filename.into())
+        } else {
+            None
+        }
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -82,7 +95,6 @@ mod test {
         fs::remove_file(file).unwrap();
     }
 
-
     #[test]
     fn unzip_file_works() {
         let file = env::temp_dir().join("advocat-test").join("problem-2.zip");
@@ -92,9 +104,12 @@ mod test {
         assert!(download_file(url, &file).is_ok(),
             "The test file can't be downloaded, test ABORTED");
 
-        let output_folder = env::temp_dir().join("advocat-test").join("unzip");
-        assert!(unzip_file(&file, &output_folder).is_ok());
+        let output_folder = env::temp_dir().join("advocat-test").join("samples");
+        assert!(unzip_samples(&file, &output_folder).is_ok());
         assert!(output_folder.is_dir());
+        output_folder.read_dir().unwrap().for_each(|x| {
+            assert!(x.unwrap().file_name().to_string_lossy().starts_with("sample"));
+        });
         assert_ne!(output_folder.read_dir().unwrap().count(), 0);
 
         fs::remove_dir_all(output_folder).unwrap();

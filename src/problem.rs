@@ -87,13 +87,13 @@ impl TryFrom<&path::Path> for Problem {
         let id = verify_id(id)
             .map_err(CreationError::BadId)?;
 
-        let source = path.join(path::Path::new("main.cc"));
-        let output = path.join(path::Path::new("main.x"));
+        let source = path.join("main.cc");
+        let output = path.join("main.x");
         let proj_dirs = directories::ProjectDirs::from("com", "rdvdev2", "advocat");
         let work_dir = if let Some(proj_dirs) = proj_dirs {
-            proj_dirs.cache_dir().join(path::Path::new(&id))
+            proj_dirs.cache_dir().join(&id)
         } else {
-            path.join(path::Path::new(".advocat"))
+            path.join(".advocat")
         };
 
         let is_private = id.starts_with('X');

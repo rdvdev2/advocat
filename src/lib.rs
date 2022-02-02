@@ -3,6 +3,7 @@ use crate::problem::{CreationError, Problem};
 
 mod problem;
 mod ux;
+mod download;
 
 pub fn run() -> i32 {
     let name = env!("CARGO_PKG_NAME");

@@ -37,7 +37,7 @@ pub fn run(config: Config) -> i32 {
     let authors = env!("CARGO_PKG_AUTHORS");
 
     info!("{} v{} by {}", name, version, authors);
-    debug!("Debug mode ON: Consider decreasing the log level to get quiter output.");
+    debug!("Debug mode ON: Consider decreasing the log level to get quieter output.");
 
     debug!("Getting the working directory...");
     let cwd = if let Ok(dir) = env::current_dir() {

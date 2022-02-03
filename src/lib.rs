@@ -1,12 +1,37 @@
 use std::{env, fs};
 use std::fmt::Display;
 use crate::problem::{CreationError, Problem};
+use crate::ux::set_global_log_level;
 
 mod problem;
 mod ux;
 mod download;
 
-pub fn run() -> i32 {
+pub struct Config {
+    log_level: ux::LogLevel
+}
+
+pub fn parse_args() -> Config {
+    let mut args = env::args();
+    let mut config = Config {
+        log_level: ux::LogLevel::Info
+    };
+
+    let _executable = args.next();
+    for arg in args {
+        match arg.as_str() {
+            "-d" | "--debug" => config.log_level = ux::LogLevel::Debug,
+            "-h" | "--help" => todo!("Add a help message"),
+            _ => {}
+        }
+    }
+
+    config
+}
+
+pub fn run(config: Config) -> i32 {
+    set_global_log_level(config.log_level);
+
     let name = env!("CARGO_PKG_NAME");
     let version = env!("CARGO_PKG_VERSION");
     let authors = env!("CARGO_PKG_AUTHORS");

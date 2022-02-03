@@ -1,9 +1,27 @@
+use std::io;
+use std::io::Write;
 use termion::{color, style};
 
+#[derive(PartialEq, PartialOrd, Clone, Copy)]
 pub enum LogLevel { Debug, Info, Warning, Error }
+
+static mut GLOBAL_LOG_LEVEL: LogLevel = LogLevel::Info;
+
+pub fn set_global_log_level(level: LogLevel) {
+    unsafe {
+        GLOBAL_LOG_LEVEL = level
+    }
+}
+
+pub fn get_global_log_level() -> LogLevel {
+    unsafe {
+        GLOBAL_LOG_LEVEL
+    }
+}
 
 pub fn print_message(level: LogLevel, msg: String) {
     match level {
+        x if x < get_global_log_level() => (),
         LogLevel::Debug => eprintln!(":: {}{}{}", style::Italic, msg, style::Reset),
         LogLevel::Info => println!("{}", msg),
         LogLevel::Warning => eprintln!("{}{}WARNING: {}{}{}", color::Fg(color::LightYellow), style::Bold, msg, style::NoBold, style::Reset),
@@ -60,11 +78,14 @@ pub fn show_task_status(name: &str, task_type: TaskType, task_status: &TaskStatu
         TaskStatus::SkipGood => println!("{}SKIP ✓{}", color::Fg(color::Cyan), style::Reset),
         TaskStatus::SkipBad => println!("{}SKIP ✘{}", color::Fg(color::Cyan), style::Reset),
         TaskStatus::Fail => println!("{}FAIL ✘{}", color::Fg(color::Red), style::Reset),
-        TaskStatus::InProgress => print!("{}...\r", style::Reset)
-    }
-
-    if let TaskStatus::InProgress = task_status {
-        println!(); // TODO: Should only activate if log level is DEBUG
+        TaskStatus::InProgress => {
+            print!("{}...\r", style::Reset);
+            if let LogLevel::Debug = get_global_log_level() {
+                println!();
+            } else {
+                io::stdout().flush().unwrap();
+            }
+        }
     }
 }
 

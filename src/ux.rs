@@ -38,9 +38,16 @@ macro_rules! error {
 
 pub enum TaskType { Fetch, Test }
 
+#[derive(PartialEq, Debug)]
 pub enum TaskStatus { Done, Pass, SkipGood, SkipBad, Fail, InProgress }
 
-pub fn show_task_status(name: &str, task_type: TaskType, task_status: TaskStatus) {
+impl TaskStatus {
+    pub fn is_ok(&self) -> bool {
+        matches!(self, TaskStatus::Done | TaskStatus::Pass | TaskStatus::SkipGood)
+    }
+}
+
+pub fn show_task_status(name: &str, task_type: TaskType, task_status: &TaskStatus) {
     let name = match task_type {
         TaskType::Fetch => name.to_owned() + "... ",
         TaskType::Test => name.to_uppercase() + ": "
@@ -55,6 +62,10 @@ pub fn show_task_status(name: &str, task_type: TaskType, task_status: TaskStatus
         TaskStatus::Fail => println!("{}FAIL ✘{}", color::Fg(color::Red), style::Reset),
         TaskStatus::InProgress => print!("{}...\r", style::Reset)
     }
+
+    if let TaskStatus::InProgress = task_status {
+        println!(); // TODO: Should only activate if log level is DEBUG
+    }
 }
 
 #[cfg(test)]
@@ -66,11 +77,11 @@ mod test {
     fn fetch_status_test() {
         let task_name = "Testing fetch status";
 
-        show_task_status(task_name, TaskType::Fetch, TaskStatus::Done);
-        show_task_status(task_name, TaskType::Fetch, TaskStatus::SkipGood);
-        show_task_status(task_name, TaskType::Fetch, TaskStatus::SkipBad);
-        show_task_status(task_name, TaskType::Fetch, TaskStatus::Fail);
-        show_task_status(task_name, TaskType::Fetch, TaskStatus::InProgress);
+        show_task_status(task_name, TaskType::Fetch, &TaskStatus::Done);
+        show_task_status(task_name, TaskType::Fetch, &TaskStatus::SkipGood);
+        show_task_status(task_name, TaskType::Fetch, &TaskStatus::SkipBad);
+        show_task_status(task_name, TaskType::Fetch, &TaskStatus::Fail);
+        show_task_status(task_name, TaskType::Fetch, &TaskStatus::InProgress);
         println!();
     }
 
@@ -79,10 +90,10 @@ mod test {
     fn testing_status_test() {
         let task_name = "dummy test";
 
-        show_task_status(task_name, TaskType::Test, TaskStatus::Pass);
-        show_task_status(task_name, TaskType::Test, TaskStatus::SkipBad);
-        show_task_status(task_name, TaskType::Test, TaskStatus::Fail);
-        show_task_status(task_name, TaskType::Test, TaskStatus::InProgress);
+        show_task_status(task_name, TaskType::Test, &TaskStatus::Pass);
+        show_task_status(task_name, TaskType::Test, &TaskStatus::SkipBad);
+        show_task_status(task_name, TaskType::Test, &TaskStatus::Fail);
+        show_task_status(task_name, TaskType::Test, &TaskStatus::InProgress);
         println!();
     }
 }

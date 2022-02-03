@@ -1,4 +1,5 @@
-use std::env;
+use std::{env, fs};
+use std::fmt::Display;
 use crate::problem::{CreationError, Problem};
 
 mod problem;
@@ -31,8 +32,64 @@ pub fn run() -> i32 {
     };
     debug!("Done! Problem details: {:?}", problem);
 
-    warning!("After detecting the problem, nothing happens! (unimplemented)");
+    if !problem.work_dir.exists() {
+        debug!("Creating the problem directory: {}", problem.work_dir.to_string_lossy());
+        if fs::create_dir_all(&problem.work_dir).is_err() {
+            error!("Couldn't create a workdir for the program!");
+            return exitcode::IOERR;
+        }
+    }
+
+    if problem.work_dir.is_file() {
+        error!("The file {} has the same path as the workdir of the program, move it or delete it!",
+            problem.work_dir.to_string_lossy());
+        return exitcode::DATAERR;
+    }
+
+    let zip = execute_task("Downloading problem zip", || download::download_problem_zip(&problem));
+    let main_cc = execute_task("Downloading problem main.cc", || download::download_problem_main(&problem));
+    let tests = execute_task("Extracting tests", || download::unzip_problem_tests(&problem));
+
+    if !zip && problem.is_private {
+        eprintln!();
+        warning!("Unable to retrieve tests!");
+        eprintln!("You can manually download the problem zip from [{}] and save it as [{}]",
+                  problem.zip_url,
+                  problem.work_dir.join("problem.zip").to_string_lossy()
+        );
+    }
+
+    if !main_cc {
+        eprintln!();
+        error!("Unable to retrieve the main.cc file!");
+        eprintln!("You can manually download the main.cc file from [{}] and save it as [{}]",
+            problem.main_cc_url,
+            problem.work_dir.join("main.cc").to_string_lossy()
+        );
+        return exitcode::IOERR;
+    }
+
+    if !tests {
+        eprintln!();
+        warning!("Unable to unzip tests!");
+    }
+
+    warning!("After fetching all the needed files from jutge.org, nothing happens! (unimplemented)");
     exitcode::OK
+}
+
+fn execute_task<T, E: Display + Sized>(name: &str, task: T) -> bool
+where
+    T: Fn() -> (ux::TaskStatus, Option<E>)
+{
+    ux::show_task_status(name, ux::TaskType::Fetch, &ux::TaskStatus::InProgress);
+    let (status, err) = task();
+
+    ux::show_task_status(name, ux::TaskType::Fetch, &status);
+    if let Some(err) = err {
+        error!("The task [{}] returned the following error: {}", name, err);
+    }
+    return status.is_ok()
 }
 
 fn handle_problem_creation_error(e: problem::CreationError) -> i32 {

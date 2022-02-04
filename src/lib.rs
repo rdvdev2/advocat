@@ -1,11 +1,13 @@
-use std::{env, fs};
+use std::{env, fs, path};
 use std::fmt::Display;
 use crate::problem::{CreationError, Problem};
+use crate::testsuite::TestSuite;
 use crate::ux::set_global_log_level;
 
 mod problem;
 mod ux;
 mod download;
+mod testsuite;
 
 pub struct Config {
     log_level: ux::LogLevel
@@ -99,7 +101,9 @@ pub fn run(config: Config) -> i32 {
         warning!("Unable to unzip tests!");
     }
 
-    warning!("After fetching all the needed files from jutge.org, nothing happens! (unimplemented)");
+    let jutge_tests = load_tests("jutge.org", problem.work_dir.join("samples").as_path(), !tests);
+    let user_tests = load_tests("user", problem.source.parent().unwrap(), false);
+
     exitcode::OK
 }
 
@@ -115,6 +119,15 @@ where
         error!("The task [{}] returned the following error: {}", name, err);
     }
     return status.is_ok()
+}
+
+fn load_tests(name: &str, dir: &path::Path, ignore_missing_dir: bool) -> Option<TestSuite> {
+    debug!("Loading {} tests...", name);
+    match TestSuite::FromDir(name, dir) {
+        Err(testsuite::TestSuiteCreationError::PathDoesntExist) if ignore_missing_dir => None,
+        Err(e) => { error!("Error loading {} tests: {}", name, e); None },
+        Ok(testsuite) => Some(testsuite)
+    }
 }
 
 fn handle_problem_creation_error(e: problem::CreationError) -> i32 {

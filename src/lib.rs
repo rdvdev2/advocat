@@ -118,12 +118,12 @@ where
     if let Some(err) = err {
         error!("The task [{}] returned the following error: {}", name, err);
     }
-    return status.is_ok()
+    status.is_ok()
 }
 
 fn load_tests(name: &str, dir: &path::Path, ignore_missing_dir: bool) -> Option<TestSuite> {
     debug!("Loading {} tests...", name);
-    match TestSuite::FromDir(name, dir) {
+    match TestSuite::from_dir(name, dir) {
         Err(testsuite::TestSuiteCreationError::PathDoesntExist) if ignore_missing_dir => None,
         Err(e) => { error!("Error loading {} tests: {}", name, e); None },
         Ok(testsuite) => Some(testsuite)

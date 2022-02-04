@@ -27,7 +27,7 @@ pub struct TestSuite {
 
 impl TestSuite {
     // TODO: Tests
-    pub fn FromDir(name: &str, dir: &path::Path) -> Result<TestSuite, TestSuiteCreationError> {
+    pub fn from_dir(name: &str, dir: &path::Path) -> Result<TestSuite, TestSuiteCreationError> {
         if !dir.exists() {
             Err(TestSuiteCreationError::PathDoesntExist)
         } else if !dir.is_dir() {
@@ -43,7 +43,7 @@ impl TestSuite {
             input_files.iter()
                 .map(|inp| (inp.path(), inp.path().with_extension("cor")))
                 .for_each(|(inp, out)|
-                    if let Some(test) = Test::FromFiles(inp.as_path(), out.as_path()) {
+                    if let Some(test) = Test::from_files(inp.as_path(), out.as_path()) {
                         suite.tests.push(test);
                 });
 
@@ -59,7 +59,7 @@ struct Test {
 
 impl Test {
     // TODO: Tests
-    fn FromFiles(input_file: &path::Path, output_file: &path::Path) -> Option<Test> {
+    fn from_files(input_file: &path::Path, output_file: &path::Path) -> Option<Test> {
         if let Ok(inputs) = fs::read_to_string(input_file) {
             if let Ok(outputs) = fs::read_to_string(output_file) {
                 debug!("Found test: {} => {}", input_file.to_string_lossy(), output_file.to_string_lossy());

@@ -8,6 +8,7 @@ mod problem;
 mod ux;
 mod download;
 mod testsuite;
+mod template;
 
 pub struct Config {
     log_level: ux::LogLevel
@@ -103,6 +104,15 @@ pub fn run(config: Config) -> i32 {
 
     let jutge_tests = load_tests("jutge.org", problem.work_dir.join("samples").as_path(), !tests);
     let user_tests = load_tests("user", problem.source.parent().unwrap(), false);
+
+    debug!("Generating sources...");
+    let sources = match template::generate_main(&problem) {
+        Ok(s) => s,
+        Err(e) => {
+            error!("Couldn't generate a main.cc file to compile: {}", e);
+            return exitcode::IOERR;
+        }
+    };
 
     exitcode::OK
 }

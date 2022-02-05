@@ -208,3 +208,26 @@ fn show_veredict(compiles: bool, passed: usize, total: usize) -> i32 {
 
     code
 }
+
+#[cfg(test)]
+mod test {
+    use crate::problem::{IdError, SourceError};
+    use super::*;
+
+    #[test]
+    fn handle_problem_creation_error_test() {
+        assert_eq!(handle_problem_creation_error(CreationError::NonExistingPath), exitcode::OSERR);
+        assert_eq!(handle_problem_creation_error(CreationError::NonDirectoryPath), exitcode::OSERR);
+        assert_eq!(handle_problem_creation_error(CreationError::BadPathFormat), exitcode::OSERR);
+        assert_eq!(handle_problem_creation_error(CreationError::BadId(IdError::InvalidId)), exitcode::DATAERR);
+        assert_eq!(handle_problem_creation_error(CreationError::BadSource(SourceError::NonFilePath)), exitcode::DATAERR);
+    }
+
+    #[test]
+    fn show_veredict_test() {
+        assert_eq!(show_veredict(false, 0, 0), exitcode::DATAERR);
+        assert_eq!(show_veredict(true, 0, 0), exitcode::OK);
+        assert_eq!(show_veredict(true, 0, 1), exitcode::DATAERR);
+        assert_eq!(show_veredict(true, 1, 1), exitcode::OK);
+    }
+}

@@ -72,3 +72,25 @@ pub fn generate_main(problem: &problem::Problem) -> Result<path::PathBuf, MainGe
         .map_err(MainGenerationError::ErrorWritingFile)?;
     Ok(generated_main_path)
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn apply_normal_template_test() {
+        let original = "// I'M THE ORIGINAL ONE";
+        let expected_output = env::current_dir().unwrap().join("tests").join("resources").join("normal.cc");
+        
+        assert_eq!(apply_normal_template(original), fs::read_to_string(expected_output).unwrap());
+    }
+
+    #[test]
+    fn apply_nomain_template_test() {
+        let original = "// I'M THE ORIGINAL ONE";
+        let main = "// I'M THE MAIN ONE";
+        let expected_output = env::current_dir().unwrap().join("tests").join("resources").join("nomain.cc");
+        
+        assert_eq!(apply_nomain_template(original, main), fs::read_to_string(expected_output).unwrap());
+    }
+}

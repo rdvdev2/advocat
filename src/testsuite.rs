@@ -166,5 +166,5 @@ fn parse_diff(diff: Vec<diff::Result<&str>>) -> (bool, String) {
         }
     }
 
-    (pass, diff_text)
+    (pass, diff_text.trim_end_matches('\n').to_string())
 }

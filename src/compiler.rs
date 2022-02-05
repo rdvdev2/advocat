@@ -1,5 +1,4 @@
 use std::{env, fmt, fs, io, path, process};
-use std::fmt::{Formatter, write};
 use crate::{debug, problem};
 
 pub static P1XX: Compiler = Compiler {

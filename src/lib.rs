@@ -1,5 +1,6 @@
 use std::{env, fs, path};
 use std::fmt::Display;
+use termion::{color, style};
 use crate::compiler::CompilationError;
 use crate::problem::{CreationError, Problem};
 use crate::testsuite::TestSuite;
@@ -120,14 +121,17 @@ pub fn run(config: Config) -> i32 {
     let binary = execute_compiler(&problem, generated_sources.as_path());
 
     let mut passed_tests: usize = 0;
+    let mut total_tests: usize = 0;
     if let Some(tests) = jutge_tests {
         passed_tests += tests.run(problem.output.as_path(), !binary);
+        total_tests += tests.count();
     }
     if let Some(tests) = user_tests {
         passed_tests += tests.run(problem.output.as_path(), !binary);
+        total_tests += tests.count();
     }
 
-    exitcode::OK
+    show_veredict(binary, passed_tests, total_tests)
 }
 
 fn execute_task<T, E: Display + Sized>(name: &str, task: T) -> bool
@@ -184,4 +188,23 @@ fn handle_problem_creation_error(e: problem::CreationError) -> i32 {
         CreationError::BadId(_) |
         CreationError::BadSource(_) => exitcode::DATAERR
     }
+}
+
+fn show_veredict(compiles: bool, passed: usize, total: usize) -> i32 {
+    let code = if !compiles {
+        print!("{}Your code doesn't compile!", color::Fg(color::Red));
+        exitcode::DATAERR
+    } else if total == 0 {
+        print!("{}Your code compiles but you should test it before sumbitting. Try to add some tests to the folder.", color::Fg(color::LightYellow));
+        exitcode::OK
+    } else if passed != total {
+        print!("{}DON'T submit your code to jutge.org!", color::Fg(color::Red));
+        exitcode::DATAERR
+    } else {
+        print!("{}You're ready to submit your code to jutge.org!", color::Fg(color::Green));
+        exitcode::OK
+    };
+    println!(" ({passed} out of {total} tests passed){}", style::Reset);
+
+    code
 }

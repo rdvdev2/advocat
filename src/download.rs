@@ -108,8 +108,10 @@ pub fn download_problem_zip(problem: &problem::Problem) -> (ux::TaskStatus, Opti
     let path = problem.work_dir.join("problem.zip");
 
     if path.is_file() {
+        debug!("Problem zip already downloaded");
         (ux::TaskStatus::SkipGood, None)
     } else if path.is_dir() || problem.is_private {
+        debug!("Can't download problem zip");
         (ux::TaskStatus::SkipBad, None)
     } else {
         match download_file(&problem.zip_url, &path) {
@@ -124,8 +126,10 @@ pub fn download_problem_main(problem: &problem::Problem) -> (ux::TaskStatus, Opt
     let path = problem.work_dir.join("main.cc");
 
     if problem.has_main || path.is_file() {
+        debug!("Problem main.cc already downloaded or unnecessary");
         (ux::TaskStatus::SkipGood, None)
     } else if path.is_dir() || problem.is_private {
+        debug!("Can't download problem main.cc");
         (ux::TaskStatus::SkipBad, None)
     } else {
         match download_file(&problem.main_cc_url, &path) {
@@ -141,8 +145,10 @@ pub fn unzip_problem_tests(problem: &problem::Problem) -> (ux::TaskStatus, Optio
     let tests_path = problem.work_dir.join("samples");
 
     if tests_path.is_dir() {
+        debug!("Problem tests already extracted");
         (ux::TaskStatus::SkipGood, None)
     } else if tests_path.is_file() || !zip_path.exists() {
+        debug!("Unable to extract problem tests");
         (ux::TaskStatus::SkipBad, None)
     } else {
         match unzip_samples(&zip_path, &tests_path) {

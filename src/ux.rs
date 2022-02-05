@@ -89,6 +89,11 @@ pub fn show_task_status(name: &str, task_type: TaskType, task_status: &TaskStatu
     }
 }
 
+pub fn show_task_output(title: &str, contents: &str) {
+    println!("==> {}:", title);
+    println!("{}{}{}", color::Fg(color::Magenta), contents, style::Reset);
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

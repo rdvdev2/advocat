@@ -1,5 +1,6 @@
 use std::{env, fs, path};
 use std::fmt::Display;
+use crate::compiler::CompilationError;
 use crate::problem::{CreationError, Problem};
 use crate::testsuite::TestSuite;
 use crate::ux::set_global_log_level;
@@ -9,6 +10,7 @@ mod ux;
 mod download;
 mod testsuite;
 mod template;
+mod compiler;
 
 pub struct Config {
     log_level: ux::LogLevel
@@ -106,13 +108,16 @@ pub fn run(config: Config) -> i32 {
     let user_tests = load_tests("user", problem.source.parent().unwrap(), false);
 
     debug!("Generating sources...");
-    let sources = match template::generate_main(&problem) {
+    let generated_sources = match template::generate_main(&problem) {
         Ok(s) => s,
         Err(e) => {
             error!("Couldn't generate a main.cc file to compile: {}", e);
             return exitcode::IOERR;
         }
     };
+
+    println!();
+    let binary = execute_compiler(&problem, generated_sources.as_path());
 
     exitcode::OK
 }
@@ -137,6 +142,28 @@ fn load_tests(name: &str, dir: &path::Path, ignore_missing_dir: bool) -> Option<
         Err(testsuite::TestSuiteCreationError::PathDoesntExist) if ignore_missing_dir => None,
         Err(e) => { error!("Error loading {} tests: {}", name, e); None },
         Ok(testsuite) => Some(testsuite)
+    }
+}
+
+fn execute_compiler(problem: &Problem, generated_sources: &path::Path) -> bool {
+    const TASK: &str = "Compilation";
+
+    ux::show_task_status(TASK, ux::TaskType::Test, &ux::TaskStatus::InProgress);
+    match compiler::P1XX.compile_problem(problem, generated_sources) {
+        Ok(()) => {
+            ux::show_task_status(TASK, ux::TaskType::Test, &ux::TaskStatus::Pass);
+            true
+        },
+        Err(e) => {
+            ux::show_task_status(TASK, ux::TaskType::Test, &ux::TaskStatus::Fail);
+            match e.error {
+                CompilationError::CompilerError(stderr) => {
+                    ux::show_task_output(format!("Compilation output (pass {})", e.pass).as_str(), &stderr);
+                }
+                _ => error!("Compilation failed unexpectedly: {}", e)
+            }
+            false
+        }
     }
 }
 

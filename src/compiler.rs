@@ -1,4 +1,4 @@
-use std::{env, fmt, fs, io, path, process};
+use std::{fmt, io, path, process};
 use crate::{debug, problem};
 
 pub static P1XX: Compiler = Compiler {
@@ -98,16 +98,12 @@ impl Compiler<'_> {
     }
 
     pub fn compile_problem(&self, problem: &problem::Problem, generated_source: &path::Path) -> Result<(), CompileProcessError>{
-        debug!("Creating the tmp dir for compilation");
-        let tmp_dir = env::temp_dir().join("advocat").join(&problem.id);
-        fs::create_dir_all(&tmp_dir).expect("Should exist!"); // TODO: Become part of Problem
-
         debug!("Running the first pass compilation (P1++ checks)");
         if problem.has_main {
-            let output = tmp_dir.join("main.x");
+            let output = problem.tmp_dir.join("main.x");
             self.compile_and_link_first_pass(problem.source.as_path(), output.as_path())
         } else {
-            let output = tmp_dir.join("main.o");
+            let output = problem.tmp_dir.join("main.o");
             self.compile_first_pass(problem.source.as_path(), output.as_path())
         }.map_err(|error| CompileProcessError {pass: 1, error})?;
 

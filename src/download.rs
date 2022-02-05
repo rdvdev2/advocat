@@ -160,41 +160,36 @@ pub fn unzip_problem_tests(problem: &problem::Problem) -> (ux::TaskStatus, Optio
 
 #[cfg(test)]
 mod test {
+    use crate::test_utils;
     use super::*;
-    use std::env;
-    use std::fs;
 
     #[test]
     fn download_file_works() {
-        let file = env::temp_dir().join("advocat-test").join("problem.zip");
-        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        let tmp = test_utils::SelfCleaningTmp::new("download", "download_file_works");
+
+        let file = tmp.join("problem.zip");
         let url = "https://jutge.org/problems/P10051_en/zip";
 
         assert!(download_file(url, &file).is_ok());
         assert!(file.is_file());
-        // TODO: Check the contents of the file
-
-        fs::remove_file(file).unwrap();
     }
 
     #[test]
     fn unzip_file_works() {
-        let file = env::temp_dir().join("advocat-test").join("problem-2.zip");
-        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        let tmp = test_utils::SelfCleaningTmp::new("download", "unzip_file_works");
+
+        let file = tmp.join("problem-2.zip");
         let url = "https://jutge.org/problems/P10051_en/zip";
 
         assert!(download_file(url, &file).is_ok(),
             "The test file can't be downloaded, test ABORTED");
 
-        let output_folder = env::temp_dir().join("advocat-test").join("samples");
+        let output_folder = tmp.join("samples");
         assert!(unzip_samples(&file, &output_folder).is_ok());
         assert!(output_folder.is_dir());
         output_folder.read_dir().unwrap().for_each(|x| {
             assert!(x.unwrap().file_name().to_string_lossy().starts_with("sample"));
         });
         assert_ne!(output_folder.read_dir().unwrap().count(), 0);
-
-        fs::remove_dir_all(output_folder).unwrap();
-        fs::remove_file(file).unwrap();
     }
 }

@@ -1,5 +1,5 @@
 use core::fmt;
-use std::path;
+use std::{env, path};
 use std::fs;
 use std::io;
 
@@ -12,6 +12,7 @@ pub struct Problem {
     pub source: path::PathBuf,
     pub output: path::PathBuf,
     pub work_dir: path::PathBuf,
+    pub tmp_dir: path::PathBuf,
     pub is_private: bool,
     pub has_main: bool,
     pub zip_url: String,
@@ -95,6 +96,7 @@ impl TryFrom<&path::Path> for Problem {
         } else {
             path.join(".advocat")
         };
+        let tmp_dir = env::temp_dir().join("advocat").join(&id);
 
         let is_private = id.starts_with('X');
         let has_main = file_has_main(&source)
@@ -109,6 +111,7 @@ impl TryFrom<&path::Path> for Problem {
             source,
             output,
             work_dir,
+            tmp_dir,
             is_private,
             has_main,
             zip_url,
@@ -148,22 +151,14 @@ fn file_has_main(path: &path::Path) -> Result<bool, SourceError> {
 #[cfg(test)]
 mod test {
     use super::*;
-
-    fn get_test_path(filename: &str) -> path::PathBuf {
-        path::PathBuf::from(env!("CARGO_MANIFEST_DIR").to_owned() + "/tests/" + filename)
-    }
-
-    fn generate_problem(folder: &str) -> Result<Problem, CreationError> {
-        let path = get_test_path(folder);
-        Problem::try_from(path.as_path())
-    }
+    use crate::test_utils;
 
     #[test]
     fn generate_public_problem() {
-        let p = generate_problem("problems/P00000_xx").unwrap();
+        let p = test_utils::get_problem("P00000_xx");
         assert_eq!(p.id, "P00000_xx");
-        assert_eq!(p.source, get_test_path("problems/P00000_xx/main.cc"));
-        assert_eq!(p.output, get_test_path("problems/P00000_xx/main.x"));
+        assert_eq!(p.source, test_utils::get_tests_folder().join("problems/P00000_xx/main.cc"));
+        assert_eq!(p.output, test_utils::get_tests_folder().join("problems/P00000_xx/main.x"));
         assert!(!p.work_dir.to_string_lossy().is_empty());
         assert!(!p.is_private);
         assert!(p.has_main);
@@ -173,10 +168,10 @@ mod test {
 
     #[test]
     fn generate_public_nomain_problem() {
-        let p = generate_problem("problems/P00001_xx").unwrap();
+        let p = test_utils::get_problem("P00001_xx");
         assert_eq!(p.id, "P00001_xx");
-        assert_eq!(p.source, get_test_path("problems/P00001_xx/main.cc"));
-        assert_eq!(p.output, get_test_path("problems/P00001_xx/main.x"));
+        assert_eq!(p.source, test_utils::get_tests_folder().join("problems/P00001_xx/main.cc"));
+        assert_eq!(p.output, test_utils::get_tests_folder().join("problems/P00001_xx/main.x"));
         assert!(!p.work_dir.to_string_lossy().is_empty());
         assert!(!p.is_private);
         assert!(!p.has_main);
@@ -186,10 +181,10 @@ mod test {
 
     #[test]
     fn generate_private_nomain_problem() {
-        let p = generate_problem("problems/X00000_xx").unwrap();
+        let p = test_utils::get_problem("X00000_xx");
         assert_eq!(p.id, "X00000_xx");
-        assert_eq!(p.source, get_test_path("problems/X00000_xx/main.cc"));
-        assert_eq!(p.output, get_test_path("problems/X00000_xx/main.x"));
+        assert_eq!(p.source, test_utils::get_tests_folder().join("problems/X00000_xx/main.cc"));
+        assert_eq!(p.output, test_utils::get_tests_folder().join("problems/X00000_xx/main.x"));
         assert!(!p.work_dir.to_string_lossy().is_empty());
         assert!(p.is_private);
         assert!(!p.has_main);
@@ -199,7 +194,7 @@ mod test {
 
     #[test]
     fn generate_problem_non_existing() {
-        match generate_problem("foobar") {
+        match test_utils::try_get_problem("foobar") {
             Err(CreationError::NonExistingPath) => {},
             _ => panic!()
         }
@@ -207,14 +202,14 @@ mod test {
 
     #[test]
     fn generate_problem_non_directory() {
-        match generate_problem("problems/P00000_xx/main.cc") {
+        match test_utils::try_get_problem("P00000_xx/main.cc") {
             Err(CreationError::NonDirectoryPath) => {},
             _ => panic!()
         }
     }
     #[test]
     fn generate_problem_bad_format() {
-        match generate_problem("problems/..") {
+        match test_utils::try_get_problem("..") {
             Err(CreationError::BadPathFormat) => {},
             _ => panic!()
         }
@@ -222,7 +217,7 @@ mod test {
 
     #[test]
     fn generate_problem_bad_id() {
-        match generate_problem("problems") {
+        match test_utils::try_get_problem("") {
             Err(CreationError::BadId(_)) => {},
             _ => panic!()
         }
@@ -230,7 +225,7 @@ mod test {
 
     #[test]
     fn generate_problem_bad_main() {
-        match generate_problem("problems/P99999_xx") {
+        match test_utils::try_get_problem("P99999_xx") {
             Err(CreationError::BadSource(_)) => {},
             _ => panic!()
         }
@@ -261,7 +256,7 @@ mod test {
     }
 
     fn test_has_main(test_file: &str) -> Result<bool, SourceError> {
-        let path = get_test_path(test_file);
+        let path = test_utils::get_tests_folder().join(test_file);
         file_has_main(path.as_path())
     }
 

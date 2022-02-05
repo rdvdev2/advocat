@@ -13,6 +13,9 @@ mod testsuite;
 mod template;
 mod compiler;
 
+#[cfg(test)]
+mod test_utils;
+
 pub struct Config {
     log_level: ux::LogLevel
 }

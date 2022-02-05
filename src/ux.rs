@@ -93,33 +93,3 @@ pub fn show_task_output(title: &str, contents: &str) {
     println!("==> {}:", title);
     println!("{}{}{}", color::Fg(color::Magenta), contents, style::Reset);
 }
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    #[ignore] // Rationale: This test is purely visual and must be manually checked
-    fn fetch_status_test() {
-        let task_name = "Testing fetch status";
-
-        show_task_status(task_name, TaskType::Fetch, &TaskStatus::Done);
-        show_task_status(task_name, TaskType::Fetch, &TaskStatus::SkipGood);
-        show_task_status(task_name, TaskType::Fetch, &TaskStatus::SkipBad);
-        show_task_status(task_name, TaskType::Fetch, &TaskStatus::Fail);
-        show_task_status(task_name, TaskType::Fetch, &TaskStatus::InProgress);
-        println!();
-    }
-
-    #[test]
-    #[ignore] // Rationale: This test is purely visual and must be manually checked
-    fn testing_status_test() {
-        let task_name = "dummy test";
-
-        show_task_status(task_name, TaskType::Test, &TaskStatus::Pass);
-        show_task_status(task_name, TaskType::Test, &TaskStatus::SkipBad);
-        show_task_status(task_name, TaskType::Test, &TaskStatus::Fail);
-        show_task_status(task_name, TaskType::Test, &TaskStatus::InProgress);
-        println!();
-    }
-}

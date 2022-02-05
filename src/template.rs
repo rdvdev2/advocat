@@ -45,8 +45,7 @@ impl fmt::Display for MainGenerationError {
 
 // TODO: Tests
 pub fn generate_main(problem: &problem::Problem) -> Result<path::PathBuf, MainGenerationError> {
-    let generated_main_path = env::temp_dir()
-        .join("advocat").join(problem.id.as_str()).join("main.cc");
+    let generated_main_path = problem.tmp_dir.join("main.cc");
 
     debug!("Creating {}...", generated_main_path.to_string_lossy());
     fs::create_dir_all(generated_main_path.parent().unwrap())
@@ -81,7 +80,7 @@ mod test {
     fn apply_normal_template_test() {
         let original = "// I'M THE ORIGINAL ONE";
         let expected_output = env::current_dir().unwrap().join("tests").join("resources").join("normal.cc");
-        
+
         assert_eq!(apply_normal_template(original), fs::read_to_string(expected_output).unwrap());
     }
 
@@ -90,7 +89,7 @@ mod test {
         let original = "// I'M THE ORIGINAL ONE";
         let main = "// I'M THE MAIN ONE";
         let expected_output = env::current_dir().unwrap().join("tests").join("resources").join("nomain.cc");
-        
+
         assert_eq!(apply_nomain_template(original, main), fs::read_to_string(expected_output).unwrap());
     }
 }

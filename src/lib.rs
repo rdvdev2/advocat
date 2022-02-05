@@ -119,6 +119,14 @@ pub fn run(config: Config) -> i32 {
     println!();
     let binary = execute_compiler(&problem, generated_sources.as_path());
 
+    let mut passed_tests: usize = 0;
+    if let Some(tests) = jutge_tests {
+        passed_tests += tests.run(problem.output.as_path(), !binary);
+    }
+    if let Some(tests) = user_tests {
+        passed_tests += tests.run(problem.output.as_path(), !binary);
+    }
+
     exitcode::OK
 }
 

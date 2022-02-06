@@ -13,6 +13,7 @@ mod testsuite;
 mod template;
 mod compiler;
 mod config;
+mod connection_manager;
 
 #[cfg(test)]
 mod test_utils;
@@ -60,8 +61,16 @@ pub fn run() -> i32 {
         return exitcode::DATAERR;
     }
 
-    let zip = execute_task("Downloading problem zip", || download::download_problem_zip(&problem));
-    let main_cc = execute_task("Downloading problem main.cc", || download::download_problem_main(&problem));
+    let mut connection = match connection_manager::ConnectionManager::new(&config) {
+        Ok(c) => c,
+        Err(e) => {
+            error!("Couldn't start the connection manager: {}", e);
+            return exitcode::IOERR;
+        }
+    };
+
+    let zip = execute_task("Downloading problem zip", || download::download_problem_zip(&problem, &mut connection));
+    let main_cc = execute_task("Downloading problem main.cc", || download::download_problem_main(&problem, &mut connection));
     let tests = execute_task("Extracting tests", || download::unzip_problem_tests(&problem));
 
     if !zip && problem.is_private {
@@ -117,9 +126,9 @@ pub fn run() -> i32 {
     show_veredict(binary, passed_tests, total_tests)
 }
 
-fn execute_task<T, E: Display + Sized>(name: &str, task: T) -> bool
+fn execute_task<T, E: Display + Sized>(name: &str, mut task: T) -> bool
 where
-    T: Fn() -> (ux::TaskStatus, Option<E>)
+    T: FnMut() -> (ux::TaskStatus, Option<E>)
 {
     ux::show_task_status(name, ux::TaskType::Fetch, &ux::TaskStatus::InProgress);
     let (status, err) = task();

@@ -1,38 +1,9 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::Display;
+use std::fmt::Formatter;
 use std::path;
-use curl::easy;
 use std::fs;
 use std::io;
-use std::io::Write;
-use crate::{debug, problem, ux};
-
-pub enum DownloadError {
-    CantCreateFile(io::Error),
-    CurlError(curl::Error)
-}
-
-impl Display for DownloadError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DownloadError::CantCreateFile(e) => write!(f, "Couldn't create the file: {}", e),
-            DownloadError::CurlError(e) => write!(f, "Curl raised an error: {}", e)
-        }
-    }
-}
-
-fn download_file(url: &str, path: &path::Path) -> Result<(), DownloadError> {
-    debug!("Downloading {} to {}", url, path.to_string_lossy());
-
-    let mut file = fs::File::create(path)
-        .map_err(DownloadError::CantCreateFile)?;
-
-    let mut easy = easy::Easy::new();
-    easy.url(url).map_err(DownloadError::CurlError)?;
-    easy.write_function(move |data| {
-        file.write(data).or(Ok(0))
-    }).map_err(DownloadError::CurlError)?;
-    easy.perform().map_err(DownloadError::CurlError)
-}
+use crate::{connection_manager, debug, problem, ux};
 
 pub enum UnzipError {
     CantReadFile(io::Error),
@@ -104,7 +75,7 @@ fn filter_samples(zip_file: &zip::read::ZipFile) -> Option<path::PathBuf> {
 }
 
 // TODO: Tests
-pub fn download_problem_zip(problem: &problem::Problem) -> (ux::TaskStatus, Option<DownloadError>) {
+pub fn download_problem_zip(problem: &problem::Problem, connection: &mut connection_manager::ConnectionManager) -> (ux::TaskStatus, Option<connection_manager::Error>) {
     let path = problem.work_dir.join("problem.zip");
 
     if path.is_file() {
@@ -114,7 +85,7 @@ pub fn download_problem_zip(problem: &problem::Problem) -> (ux::TaskStatus, Opti
         debug!("Can't download problem zip");
         (ux::TaskStatus::SkipBad, None)
     } else {
-        match download_file(&problem.zip_url, &path) {
+        match connection.get_file(&problem.zip_url, &path) {
             Ok(()) => (ux::TaskStatus::Done, None),
             Err(e) => (ux::TaskStatus::Fail, Some(e)),
         }
@@ -122,7 +93,7 @@ pub fn download_problem_zip(problem: &problem::Problem) -> (ux::TaskStatus, Opti
 }
 
 // TODO: Tests
-pub fn download_problem_main(problem: &problem::Problem) -> (ux::TaskStatus, Option<DownloadError>) {
+pub fn download_problem_main(problem: &problem::Problem, connection: &mut connection_manager::ConnectionManager) -> (ux::TaskStatus, Option<connection_manager::Error>) {
     let path = problem.work_dir.join("main.cc");
 
     if problem.has_main || path.is_file() {
@@ -132,7 +103,7 @@ pub fn download_problem_main(problem: &problem::Problem) -> (ux::TaskStatus, Opt
         debug!("Can't download problem main.cc");
         (ux::TaskStatus::SkipBad, None)
     } else {
-        match download_file(&problem.main_cc_url, &path) {
+        match connection.get_file(&problem.main_cc_url, &path) {
             Ok(()) => (ux::TaskStatus::Done, None),
             Err(e) => (ux::TaskStatus::Fail, Some(e))
         }
@@ -155,41 +126,5 @@ pub fn unzip_problem_tests(problem: &problem::Problem) -> (ux::TaskStatus, Optio
             Ok(()) => (ux::TaskStatus::Done, None),
             Err(e) => (ux::TaskStatus::Fail, Some(e))
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::test_utils;
-    use super::*;
-
-    #[test]
-    fn download_file_works() {
-        let tmp = test_utils::SelfCleaningTmp::new("download", "download_file_works");
-
-        let file = tmp.join("problem.zip");
-        let url = "https://jutge.org/problems/P10051_en/zip";
-
-        assert!(download_file(url, &file).is_ok());
-        assert!(file.is_file());
-    }
-
-    #[test]
-    fn unzip_file_works() {
-        let tmp = test_utils::SelfCleaningTmp::new("download", "unzip_file_works");
-
-        let file = tmp.join("problem-2.zip");
-        let url = "https://jutge.org/problems/P10051_en/zip";
-
-        assert!(download_file(url, &file).is_ok(),
-            "The test file can't be downloaded, test ABORTED");
-
-        let output_folder = tmp.join("samples");
-        assert!(unzip_samples(&file, &output_folder).is_ok());
-        assert!(output_folder.is_dir());
-        output_folder.read_dir().unwrap().for_each(|x| {
-            assert!(x.unwrap().file_name().to_string_lossy().starts_with("sample"));
-        });
-        assert_ne!(output_folder.read_dir().unwrap().count(), 0);
     }
 }

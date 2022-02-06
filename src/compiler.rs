@@ -7,7 +7,6 @@ pub static P1XX: Compiler = Compiler {
     flags2: &["-D_JUDGE_", "-DNDEBUG", "-O2"]
 };
 
-// TODO: Tests
 pub struct Compiler<'a> {
     command: &'a str,
     flags1: &'a[&'a str],

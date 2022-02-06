@@ -43,7 +43,6 @@ impl fmt::Display for MainGenerationError {
     }
 }
 
-// TODO: Tests
 pub fn generate_main(problem: &problem::Problem) -> Result<path::PathBuf, MainGenerationError> {
     let generated_main_path = problem.tmp_dir.join("main.cc");
 

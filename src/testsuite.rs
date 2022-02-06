@@ -28,7 +28,6 @@ pub struct TestSuite {
 }
 
 impl TestSuite {
-    // TODO: Tests
     pub fn from_dir(name: &str, dir: &path::Path) -> Result<TestSuite, TestSuiteCreationError> {
         if !dir.exists() {
             Err(TestSuiteCreationError::PathDoesntExist)
@@ -93,7 +92,6 @@ struct TestResult {
 }
 
 impl Test {
-    // TODO: Tests
     fn from_files(input_file: &path::Path, output_file: &path::Path) -> Option<Test> {
         if let Ok(inputs) = fs::read_to_string(input_file) {
             if let Ok(outputs) = fs::read_to_string(output_file) {

@@ -60,7 +60,6 @@ fn unzip_samples(zip_path: &path::Path, output_folder: &path::Path) -> Result<()
     Ok(())
 }
 
-// TODO: Tests
 fn filter_samples(zip_file: &zip::read::ZipFile) -> Option<path::PathBuf> {
     let path = zip_file.enclosed_name()?;
     if let Some(filename) = path.file_name() {
@@ -74,7 +73,6 @@ fn filter_samples(zip_file: &zip::read::ZipFile) -> Option<path::PathBuf> {
     }
 }
 
-// TODO: Tests
 pub fn download_problem_zip(problem: &problem::Problem, connection: &mut connection_manager::ConnectionManager) -> (ux::TaskStatus, Option<connection_manager::Error>) {
     let path = problem.work_dir.join("problem.zip");
 
@@ -92,7 +90,6 @@ pub fn download_problem_zip(problem: &problem::Problem, connection: &mut connect
     }
 }
 
-// TODO: Tests
 pub fn download_problem_main(problem: &problem::Problem, connection: &mut connection_manager::ConnectionManager) -> (ux::TaskStatus, Option<connection_manager::Error>) {
     let path = problem.work_dir.join("main.cc");
 
@@ -110,7 +107,6 @@ pub fn download_problem_main(problem: &problem::Problem, connection: &mut connec
     }
 }
 
-// TODO: Tests
 pub fn unzip_problem_tests(problem: &problem::Problem) -> (ux::TaskStatus, Option<UnzipError>) {
     let zip_path = problem.work_dir.join("problem.zip");
     let tests_path = problem.work_dir.join("samples");

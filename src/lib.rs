@@ -85,9 +85,11 @@ pub fn run() -> i32 {
     if !tests {
         warning!("Unable to unzip tests!");
     }
-
-    let jutge_tests = load_tests("jutge.org", problem.work_dir.join("samples").as_path(), !tests);
-    let user_tests = load_tests("user", problem.source.parent().unwrap(), false);
+    
+    let tests = [
+        load_tests("jutge.org", problem.work_dir.join("samples").as_path(), !tests),
+        load_tests("user", problem.source.parent().unwrap(), false)
+    ];
 
     debug!("Generating sources...");
     let generated_sources = match template::generate_main(&problem) {
@@ -100,17 +102,7 @@ pub fn run() -> i32 {
 
     println!();
     let binary = execute_compiler(&problem, generated_sources.as_path());
-
-    let mut passed_tests: usize = 0;
-    let mut total_tests: usize = 0;
-    if let Some(tests) = jutge_tests {
-        passed_tests += tests.run(problem.output.as_path(), !binary);
-        total_tests += tests.count();
-    }
-    if let Some(tests) = user_tests {
-        passed_tests += tests.run(problem.output.as_path(), !binary);
-        total_tests += tests.count();
-    }
+    let (passed_tests, total_tests) = run_tests(&tests, problem.output.as_path(), !binary);
 
     show_veredict(binary, passed_tests, total_tests)
 }
@@ -158,6 +150,18 @@ fn execute_compiler(problem: &Problem, generated_sources: &path::Path) -> bool {
             false
         }
     }
+}
+
+fn run_tests(testsuites: &[Option<testsuite::TestSuite>], binary: &path::Path, skip_tests: bool) -> (usize, usize) {
+    let mut passed: usize = 0;
+    let mut total: usize = 0;
+
+    for testsuite in testsuites.iter().flatten() {
+        passed += testsuite.run(binary, skip_tests);
+        total += testsuite.count();
+    }
+
+    (passed, total)
 }
 
 fn handle_problem_creation_error(e: problem::CreationError) -> i32 {

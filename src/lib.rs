@@ -12,33 +12,13 @@ mod download;
 mod testsuite;
 mod template;
 mod compiler;
+mod config;
 
 #[cfg(test)]
 mod test_utils;
 
-pub struct Config {
-    log_level: ux::LogLevel
-}
-
-pub fn parse_args() -> Config {
-    let mut args = env::args();
-    let mut config = Config {
-        log_level: ux::LogLevel::Info
-    };
-
-    let _executable = args.next();
-    for arg in args {
-        match arg.as_str() {
-            "-d" | "--debug" => config.log_level = ux::LogLevel::Debug,
-            "-h" | "--help" => todo!("Add a help message"),
-            _ => {}
-        }
-    }
-
-    config
-}
-
-pub fn run(config: Config) -> i32 {
+pub fn run() -> i32 {
+    let config = config::Config::generate();
     set_global_log_level(config.log_level);
 
     let name = env!("CARGO_PKG_NAME");
@@ -58,7 +38,7 @@ pub fn run(config: Config) -> i32 {
     debug!("Done! Working directory is {}", cwd.to_string_lossy());
 
     debug!("Generating problem details...");
-    let problem: Problem = match Problem::try_from(cwd.as_path()) {
+    let problem: Problem = match Problem::new(cwd.as_path(), &config) {
         Ok(p) => p,
         Err(e) => {
             return handle_problem_creation_error(e)

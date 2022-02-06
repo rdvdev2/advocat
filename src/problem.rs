@@ -1,10 +1,10 @@
 use core::fmt;
-use std::{env, path};
+use std::path;
 use std::fs;
 use std::io;
 
 use regex::Regex;
-use crate::debug;
+use crate::{config, debug};
 
 #[derive(Debug)]
 pub struct Problem {
@@ -72,10 +72,8 @@ impl fmt::Display for SourceError {
     }
 }
 
-impl TryFrom<&path::Path> for Problem {
-    type Error = CreationError;
-
-    fn try_from(path: &path::Path) -> Result<Self, Self::Error> {
+impl Problem {
+    pub fn new(path: &path::Path, config: &config::Config) -> Result<Self, CreationError> {
         if !path.exists() {
             return Err(CreationError::NonExistingPath);
         } else if !path.is_dir() {
@@ -90,21 +88,16 @@ impl TryFrom<&path::Path> for Problem {
 
         let source = path.join("main.cc");
         let output = path.join("main.x");
-        let proj_dirs = directories::ProjectDirs::from("com", "rdvdev2", "advocat");
-        let work_dir = if let Some(proj_dirs) = proj_dirs {
-            proj_dirs.cache_dir().join(&id)
-        } else {
-            path.join(".advocat")
-        };
-        let tmp_dir = env::temp_dir().join("advocat").join(&id);
+        let work_dir = config.cache_dir.join(&id);
+        let tmp_dir = config.tmp_dir.join(&id);
 
         let is_private = id.starts_with('X');
         let has_main = file_has_main(&source)
             .map_err(CreationError::BadSource)?;
 
-        let problem_url = String::from("https://jutge.org/problems/") + &id;
-        let zip_url = problem_url.clone() + "/zip";
-        let main_cc_url = problem_url + "/main/cc";
+        let problem_url = format!("https://jutge.org/problems/{}", id);
+        let zip_url = format!("{}/zip", problem_url);
+        let main_cc_url = format!("{}/main/cc", problem_url);
 
         Ok(Problem {
             id,

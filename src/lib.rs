@@ -73,27 +73,16 @@ pub fn run() -> i32 {
     let main_cc = execute_task("Downloading problem main.cc", || download::download_problem_main(&problem, &mut connection));
     let tests = execute_task("Extracting tests", || download::unzip_problem_tests(&problem));
 
-    if !zip && problem.is_private {
-        eprintln!();
+    if !zip {
         warning!("Unable to retrieve tests!");
-        eprintln!("You can manually download the problem zip from [{}] and save it as [{}]",
-                  problem.zip_url,
-                  problem.work_dir.join("problem.zip").to_string_lossy()
-        );
     }
 
     if !main_cc {
-        eprintln!();
         error!("Unable to retrieve the main.cc file!");
-        eprintln!("You can manually download the main.cc file from [{}] and save it as [{}]",
-            problem.main_cc_url,
-            problem.work_dir.join("main.cc").to_string_lossy()
-        );
         return exitcode::IOERR;
     }
 
     if !tests {
-        eprintln!();
         warning!("Unable to unzip tests!");
     }
 

@@ -13,7 +13,6 @@ pub struct Problem {
     pub output: path::PathBuf,
     pub work_dir: path::PathBuf,
     pub tmp_dir: path::PathBuf,
-    pub is_private: bool,
     pub has_main: bool,
     pub zip_url: String,
     pub main_cc_url: String
@@ -91,7 +90,6 @@ impl Problem {
         let work_dir = config.cache_dir.join(&id);
         let tmp_dir = config.tmp_dir.join(&id);
 
-        let is_private = id.starts_with('X');
         let has_main = file_has_main(&source)
             .map_err(CreationError::BadSource)?;
 
@@ -105,7 +103,6 @@ impl Problem {
             output,
             work_dir,
             tmp_dir,
-            is_private,
             has_main,
             zip_url,
             main_cc_url
@@ -153,7 +150,6 @@ mod test {
         assert_eq!(p.source, test_utils::get_tests_folder().join("problems/P00000_xx/main.cc"));
         assert_eq!(p.output, test_utils::get_tests_folder().join("problems/P00000_xx/main.x"));
         assert!(!p.work_dir.to_string_lossy().is_empty());
-        assert!(!p.is_private);
         assert!(p.has_main);
         assert_eq!(p.zip_url, "https://jutge.org/problems/P00000_xx/zip");
         assert_eq!(p.main_cc_url, "https://jutge.org/problems/P00000_xx/main/cc"); // Irrelevant, but still tested
@@ -166,7 +162,6 @@ mod test {
         assert_eq!(p.source, test_utils::get_tests_folder().join("problems/P00001_xx/main.cc"));
         assert_eq!(p.output, test_utils::get_tests_folder().join("problems/P00001_xx/main.x"));
         assert!(!p.work_dir.to_string_lossy().is_empty());
-        assert!(!p.is_private);
         assert!(!p.has_main);
         assert_eq!(p.zip_url, "https://jutge.org/problems/P00001_xx/zip");
         assert_eq!(p.main_cc_url, "https://jutge.org/problems/P00001_xx/main/cc");
@@ -179,7 +174,6 @@ mod test {
         assert_eq!(p.source, test_utils::get_tests_folder().join("problems/X00000_xx/main.cc"));
         assert_eq!(p.output, test_utils::get_tests_folder().join("problems/X00000_xx/main.x"));
         assert!(!p.work_dir.to_string_lossy().is_empty());
-        assert!(p.is_private);
         assert!(!p.has_main);
         assert_eq!(p.zip_url, "https://jutge.org/problems/X00000_xx/zip");
         assert_eq!(p.main_cc_url, "https://jutge.org/problems/X00000_xx/main/cc");

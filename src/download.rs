@@ -79,8 +79,8 @@ pub fn download_problem_zip(problem: &problem::Problem, connection: &mut connect
     if path.is_file() {
         debug!("Problem zip already downloaded");
         (ux::TaskStatus::SkipGood, None)
-    } else if path.is_dir() || problem.is_private {
-        debug!("Can't download problem zip");
+    } else if path.is_dir() {
+        debug!("The download path is a folder");
         (ux::TaskStatus::SkipBad, None)
     } else {
         match connection.get_file(&problem.zip_url, &path) {
@@ -96,8 +96,8 @@ pub fn download_problem_main(problem: &problem::Problem, connection: &mut connec
     if problem.has_main || path.is_file() {
         debug!("Problem main.cc already downloaded or unnecessary");
         (ux::TaskStatus::SkipGood, None)
-    } else if path.is_dir() || problem.is_private {
-        debug!("Can't download problem main.cc");
+    } else if path.is_dir() {
+        debug!("The download path is a folder");
         (ux::TaskStatus::SkipBad, None)
     } else {
         match connection.get_file(&problem.main_cc_url, &path) {

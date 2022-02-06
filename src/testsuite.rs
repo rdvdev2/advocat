@@ -68,7 +68,7 @@ impl TestSuite {
                 } else if result.status.is_ok() {
                     pass_count += 1;
                 } else {
-                    println!("==> Test diff:\n{}", result.diff);
+                    ux::show_task_output("Test diff", format!("{}{}", style::Reset, result.diff).as_str());
                 }
             }
         }
@@ -147,24 +147,45 @@ impl Test {
 
 fn parse_diff(diff: Vec<diff::Result<&str>>) -> (bool, String) {
     debug!("Parsing diff");
+    let side_width = ((ux::get_terminal_width() - 7) / 2) as usize;
     let mut pass = true;
-    let mut diff_text = String::new();
+    let mut diff_text = format!("╭─{:—^side_width$}─┬─{:—^side_width$}─╮\n", "", "");
+    diff_text.push_str(format!("│ {:^side_width$} │ {:^side_width$} │\n", "Correct output", "Your output").as_str());
+    diff_text.push_str(format!("├─{:—^side_width$}─┼─{:—^side_width$}─┤\n", "", "").as_str());
 
     for line in diff {
         match line {
             diff::Result::Left(l) => {
                 pass = false;
-                diff_text.push_str(format!("TEST: {}{}{}\n", color::Fg(color::Green), l, style::Reset).as_str());
+                diff_text.push_str(format!("│ {}{:side_width$}{} < {:side_width$} │\n",
+                                           color::Fg(color::Green),
+                                           cut_diff_line(l, side_width),
+                                           style::Reset, "").as_str());
             }
-            diff::Result::Both(l, _) => {
-                diff_text.push_str(format!("      {}\n", l).as_str());
+            diff::Result::Both(l, r) => {
+                diff_text.push_str(format!("│ {:side_width$} │ {:side_width$} │\n",
+                                           cut_diff_line(l, side_width),
+                                           cut_diff_line(r, side_width)).as_str());
             }
             diff::Result::Right(r) => {
                 pass = false;
-                diff_text.push_str(format!("CODE: {}{}{}\n", color::Fg(color::Red), r, style::Reset).as_str());
+                diff_text.push_str(format!("│ {:side_width$} > {}{:side_width$}{} │\n",
+                                           "", color::Fg(color::Red),
+                                           cut_diff_line(r, side_width),
+                                           style::Reset).as_str());
             }
         }
     }
 
-    (pass, diff_text.trim_end_matches('\n').to_string())
+    diff_text.push_str(format!("╰─{:—^side_width$}─┴─{:—^side_width$}─╯\n", "", "").as_str());
+    (pass, diff_text)
+}
+
+fn cut_diff_line(line: &str, max_width: usize) -> String {
+    if line.len() <= max_width {
+        line.to_owned()
+    } else {
+        let line = &line[0..max_width-3];
+        line.to_owned() + "..."
+    }
 }

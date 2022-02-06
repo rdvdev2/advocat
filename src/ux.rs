@@ -93,3 +93,10 @@ pub fn show_task_output(title: &str, contents: &str) {
     println!("==> {}:", title);
     println!("{}{}{}", color::Fg(color::Magenta), contents, style::Reset);
 }
+
+pub fn get_terminal_width() -> u16 {
+    match terminal_size::terminal_size() {
+        None => 100,
+        Some((width, _)) => width.0
+    }
+}

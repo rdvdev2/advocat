@@ -1,7 +1,7 @@
 use std::{fmt, fs, io, path};
 use std::io::Write;
 use curl::easy;
-use crate::{config, debug};
+use crate::{config, debug, warning};
 
 pub enum Error {
     CurlError(curl::Error),
@@ -47,9 +47,15 @@ impl ConnectionManager {
         handle.cookie_jar(cookie_store.as_path())?;
         let mut cm = ConnectionManager { handle };
 
-        if let Some(credentials) = &config.credentials {
+        if cm.check_is_authenticated()? {
+            debug!("Client is authenticated, reusing previous session")
+        } else if let Some(credentials) = &config.credentials {
             debug!("Credentials were provided, authenticating");
-            cm.try_to_authenticate(credentials)?;
+            if cm.try_to_authenticate(credentials)? {
+                debug!("Authentication was successful");
+            } else {
+                warning!("The provided jutge.org credentials are invalid!");
+            };
         } else {
             debug!("No credentials available, running in unauthenticated mode");
         }
@@ -75,7 +81,7 @@ impl ConnectionManager {
         Ok(())
     }
 
-    fn try_to_authenticate(&mut self, credentials: &Credentials) -> Result<(), Error> {
+    fn try_to_authenticate(&mut self, credentials: &Credentials) -> Result<bool, Error> {
         if let Some(form) = credentials.build_form() {
             debug!("Attempting to authenticate");
             self.handle.url("https://jutge.org/")?;
@@ -84,12 +90,27 @@ impl ConnectionManager {
             self.handle.perform()?;
             self.handle.nobody(false)?;
             debug!("Authentication finished");
-            Ok(())
+            self.check_is_authenticated()
         } else {
             debug!("Unable to generate the authentication form");
-            Ok(())
+            Ok(false)
+        }
+    }
+
+    fn check_is_authenticated(&mut self) -> Result<bool, Error> {
+        let mut response = Vec::new();
+
+        self.handle.url("https://jutge.org/dashboard")?;
+        {
+            let mut transfer = self.handle.transfer();
+            transfer.write_function(|data| {
+                response.extend_from_slice(data);
+                Ok(data.len())
+            })?;
+            transfer.perform()?;
         }
 
+        Ok(!String::from_utf8_lossy(&response).contains("Did you sign in?"))
     }
 }
 

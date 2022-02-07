@@ -38,14 +38,16 @@ pub fn get_tests_folder() -> path::PathBuf {
 pub fn get_config() -> config::Config {
     unsafe {
         if CONFIG.is_none() {
-            CONFIG = Some(config::Config::generate());
+            CONFIG = Some(config::Config::generate().unwrap());
         }
         CONFIG.clone().unwrap()
     }
 }
 
-pub fn try_get_problem(id: &str) -> Result<problem::Problem, problem::CreationError> {
-    problem::Problem::new(get_tests_folder().join("problems").join(id).as_path(), &get_config())
+pub fn try_get_problem(id: &str) -> Result<problem::Problem, problem::Error> {
+    let mut config = get_config();
+    config.problem_dir = get_tests_folder().join("problems").join(id);
+    problem::Problem::new(&config)
 }
 
 pub fn get_problem(id: &str) -> problem::Problem {

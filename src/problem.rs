@@ -19,7 +19,7 @@ pub struct Problem {
 }
 
 #[derive(Debug)]
-pub enum CreationError {
+pub enum Error {
     NonExistingPath,
     NonDirectoryPath,
     BadPathFormat,
@@ -27,14 +27,43 @@ pub enum CreationError {
     BadSource(SourceError)
 }
 
-impl fmt::Display for CreationError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            CreationError::NonExistingPath => write!(f, "The path doesn't exist!"),
-            CreationError::NonDirectoryPath => write!(f, "The path isn't a directory!"),
-            CreationError::BadPathFormat => write!(f, "The path ends in \"..\"!"),
-            CreationError::BadId(e) => write!(f, "Problem id is wrong: {}", e),
-            CreationError::BadSource(e) => write!(f, "Problem with main.cc: {}", e)
+            Error::NonExistingPath => write!(f, "The path doesn't exist!"),
+            Error::NonDirectoryPath => write!(f, "The path isn't a directory!"),
+            Error::BadPathFormat => write!(f, "The path ends in \"..\"!"),
+            Error::BadId(e) => write!(f, "Problem id is wrong: {}", e),
+            Error::BadSource(e) => write!(f, "Problem with main.cc: {}", e)
+        }
+    }
+}
+
+impl From<Error> for exitcode::ExitCode {
+    fn from(e: Error) -> Self {
+        match e {
+            Error::NonExistingPath |
+            Error::NonDirectoryPath |
+            Error::BadPathFormat => exitcode::OSERR,
+            Error::BadId(_) |
+            Error::BadSource(_) => exitcode::DATAERR
+        }
+    }
+}
+
+impl From<Error> for crate::Error {
+    fn from(e: Error) -> Self {
+        let exitcode = match e {
+            Error::NonExistingPath |
+            Error::NonDirectoryPath |
+            Error::BadPathFormat => exitcode::OSERR,
+            Error::BadId(_) |
+            Error::BadSource(_) => exitcode::DATAERR
+        };
+
+        crate::Error {
+            description: format!("Couldn't detect your problem: {}", e),
+            exitcode
         }
     }
 }
@@ -72,26 +101,26 @@ impl fmt::Display for SourceError {
 }
 
 impl Problem {
-    pub fn new(path: &path::Path, config: &config::Config) -> Result<Self, CreationError> {
-        if !path.exists() {
-            return Err(CreationError::NonExistingPath);
-        } else if !path.is_dir() {
-            return Err(CreationError::NonDirectoryPath);
+    pub fn new(config: &config::Config) -> Result<Self, Error> {
+        if !config.problem_dir.exists() {
+            return Err(Error::NonExistingPath);
+        } else if !config.problem_dir.is_dir() {
+            return Err(Error::NonDirectoryPath);
         }
 
-        let id: String = path.file_name()
-            .ok_or(CreationError::BadPathFormat)?
+        let id: String = config.problem_dir.file_name()
+            .ok_or(Error::BadPathFormat)?
             .to_string_lossy().into();
         let id = verify_id(id)
-            .map_err(CreationError::BadId)?;
+            .map_err(Error::BadId)?;
 
-        let source = path.join("main.cc");
-        let output = path.join("main.x");
+        let source = config.problem_dir.join("main.cc");
+        let output = config.problem_dir.join("main.x");
         let work_dir = config.cache_dir.join(&id);
         let tmp_dir = config.tmp_dir.join(&id);
 
         let has_main = file_has_main(&source)
-            .map_err(CreationError::BadSource)?;
+            .map_err(Error::BadSource)?;
 
         let problem_url = format!("https://jutge.org/problems/{}", id);
         let zip_url = format!("{}/zip", problem_url);
@@ -182,7 +211,7 @@ mod test {
     #[test]
     fn generate_problem_non_existing() {
         match test_utils::try_get_problem("foobar") {
-            Err(CreationError::NonExistingPath) => {},
+            Err(Error::NonExistingPath) => {},
             _ => panic!()
         }
     }
@@ -190,14 +219,14 @@ mod test {
     #[test]
     fn generate_problem_non_directory() {
         match test_utils::try_get_problem("P00000_xx/main.cc") {
-            Err(CreationError::NonDirectoryPath) => {},
+            Err(Error::NonDirectoryPath) => {},
             _ => panic!()
         }
     }
     #[test]
     fn generate_problem_bad_format() {
         match test_utils::try_get_problem("..") {
-            Err(CreationError::BadPathFormat) => {},
+            Err(Error::BadPathFormat) => {},
             _ => panic!()
         }
     }
@@ -205,7 +234,7 @@ mod test {
     #[test]
     fn generate_problem_bad_id() {
         match test_utils::try_get_problem("") {
-            Err(CreationError::BadId(_)) => {},
+            Err(Error::BadId(_)) => {},
             _ => panic!()
         }
     }
@@ -213,7 +242,7 @@ mod test {
     #[test]
     fn generate_problem_bad_main() {
         match test_utils::try_get_problem("P99999_xx") {
-            Err(CreationError::BadSource(_)) => {},
+            Err(Error::BadSource(_)) => {},
             _ => panic!()
         }
     }

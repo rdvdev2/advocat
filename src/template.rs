@@ -23,7 +23,7 @@ fn apply_nomain_template(original: &str, main: &str) -> String {
     )
 }
 
-pub enum MainGenerationError {
+pub enum Error {
     ErrorCreatingTmpFolder(io::Error),
     ErrorCreatingFile(io::Error),
     CantReadSources(io::Error),
@@ -31,43 +31,52 @@ pub enum MainGenerationError {
     ErrorWritingFile(io::Error)
 }
 
-impl fmt::Display for MainGenerationError {
+impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            MainGenerationError::ErrorCreatingTmpFolder(e) => write!(f, "Couldn't create a temporal folder: {}", e),
-            MainGenerationError::ErrorCreatingFile(e) => write!(f, "Couldn't create the file: {}", e),
-            MainGenerationError::CantReadSources(e) => write!(f, "Couldn't read your sources: {}", e),
-            MainGenerationError::CantReadDownloadedMain(e) => write!(f, "Couldn't read the downloaded sources: {}", e),
-            MainGenerationError::ErrorWritingFile(e) => write!(f, "Unable to write the file: {}", e)
+            Error::ErrorCreatingTmpFolder(e) => write!(f, "Couldn't create a temporal folder: {}", e),
+            Error::ErrorCreatingFile(e) => write!(f, "Couldn't create the file: {}", e),
+            Error::CantReadSources(e) => write!(f, "Couldn't read your sources: {}", e),
+            Error::CantReadDownloadedMain(e) => write!(f, "Couldn't read the downloaded sources: {}", e),
+            Error::ErrorWritingFile(e) => write!(f, "Unable to write the file: {}", e)
         }
     }
 }
 
-pub fn generate_main(problem: &problem::Problem) -> Result<path::PathBuf, MainGenerationError> {
+impl From<Error> for crate::Error {
+    fn from(e: Error) -> Self {
+        crate::Error {
+            description: format!("Couldn't generate a main.cc file to compile: {}", e),
+            exitcode: exitcode::DATAERR
+        }
+    }
+}
+
+pub fn generate_main(problem: &problem::Problem) -> Result<path::PathBuf, Error> {
     let generated_main_path = problem.tmp_dir.join("main.cc");
 
     debug!("Creating {}...", generated_main_path.to_string_lossy());
     fs::create_dir_all(generated_main_path.parent().unwrap())
-        .map_err(MainGenerationError::ErrorCreatingTmpFolder)?;
+        .map_err(Error::ErrorCreatingTmpFolder)?;
     let mut generated_main = fs::File::create(&generated_main_path)
-        .map_err(MainGenerationError::ErrorCreatingFile)?;
+        .map_err(Error::ErrorCreatingFile)?;
 
     debug!("Reading {}...", problem.source.to_string_lossy());
     let original = fs::read_to_string(problem.source.as_path())
-        .map_err(MainGenerationError::CantReadSources)?;
+        .map_err(Error::CantReadSources)?;
 
     debug!("Generating contents...");
     let generated_main_contents = if problem.has_main {
         apply_normal_template(original.as_str())
     } else {
         let main = fs::read_to_string(problem.work_dir.join("main.cc"))
-            .map_err(MainGenerationError::CantReadDownloadedMain)?;
+            .map_err(Error::CantReadDownloadedMain)?;
         apply_nomain_template(original.as_str(), main.as_str())
     };
 
     debug!("Writing contents to {}...", generated_main_path.to_string_lossy());
     generated_main.write_all(generated_main_contents.as_ref())
-        .map_err(MainGenerationError::ErrorWritingFile)?;
+        .map_err(Error::ErrorWritingFile)?;
     Ok(generated_main_path)
 }
 

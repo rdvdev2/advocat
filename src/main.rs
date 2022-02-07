@@ -1,5 +1,14 @@
 use std::process;
+use advocat::error;
 
 fn main() -> ! {
-    process::exit(advocat::run());
+    let exitcode = match advocat::run() {
+        Ok(c) => c,
+        Err(e) => {
+            error!("{}", e);
+            *e
+        }
+    };
+
+    process::exit(exitcode);
 }

@@ -24,7 +24,8 @@ pub enum Error {
     NonDirectoryPath,
     BadPathFormat,
     BadId(IdError),
-    BadSource(SourceError)
+    BadSource(SourceError),
+    CantCreateWorkDir(io::Error)
 }
 
 impl fmt::Display for Error {
@@ -34,19 +35,8 @@ impl fmt::Display for Error {
             Error::NonDirectoryPath => write!(f, "The path isn't a directory!"),
             Error::BadPathFormat => write!(f, "The path ends in \"..\"!"),
             Error::BadId(e) => write!(f, "Problem id is wrong: {}", e),
-            Error::BadSource(e) => write!(f, "Problem with main.cc: {}", e)
-        }
-    }
-}
-
-impl From<Error> for exitcode::ExitCode {
-    fn from(e: Error) -> Self {
-        match e {
-            Error::NonExistingPath |
-            Error::NonDirectoryPath |
-            Error::BadPathFormat => exitcode::OSERR,
-            Error::BadId(_) |
-            Error::BadSource(_) => exitcode::DATAERR
+            Error::BadSource(e) => write!(f, "Problem with main.cc: {}", e),
+            Error::CantCreateWorkDir(e) => write!(f, "Can't create a working dir for the program: {}", e)
         }
     }
 }
@@ -56,7 +46,8 @@ impl From<Error> for crate::Error {
         let exitcode = match e {
             Error::NonExistingPath |
             Error::NonDirectoryPath |
-            Error::BadPathFormat => exitcode::OSERR,
+            Error::BadPathFormat |
+            Error::CantCreateWorkDir(_) => exitcode::OSERR,
             Error::BadId(_) |
             Error::BadSource(_) => exitcode::DATAERR
         };
@@ -118,6 +109,9 @@ impl Problem {
         let output = config.problem_dir.join("main.x");
         let work_dir = config.cache_dir.join(&id);
         let tmp_dir = config.tmp_dir.join(&id);
+
+        fs::create_dir_all(work_dir.as_path())
+            .map_err(Error::CantCreateWorkDir)?;
 
         let has_main = file_has_main(&source)
             .map_err(Error::BadSource)?;

@@ -1,7 +1,7 @@
 [package]
 name = "advocat"
 description = "A complimentary CLI tool to jutge.org"
-version = "3.0.0-dev"
+version = "3.0.0"
 license="GPL-3.0"
 authors = ["Roger Díaz Viñolas <rdvdev2@gmail.com>"]
 readme = "README.md"

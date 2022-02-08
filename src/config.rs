@@ -1,8 +1,7 @@
 use core::fmt;
 use std::{env, fs, io, path};
 use configparser::ini;
-use crate::connection_manager::Credentials;
-use crate::{connection_manager, debug, ux};
+use crate::{debug, fetch, ux};
 
 #[derive(Debug)]
 pub enum Error {
@@ -41,7 +40,7 @@ pub struct Config {
     pub config_dir: path::PathBuf,
     pub cache_dir: path::PathBuf,
     pub tmp_dir: path::PathBuf,
-    pub credentials: Option<Credentials>
+    pub credentials: Option<fetch::Credentials>
 }
 
 impl Config {
@@ -104,7 +103,7 @@ impl Config {
                 let password = auth.get("password");
 
                 if let (Some(Some(email)), Some(Some(password))) = (email, password) {
-                    self.credentials = Some(connection_manager::Credentials::new(email.as_bytes(), password.as_bytes()));
+                    self.credentials = Some(fetch::Credentials::new(email.as_bytes(), password.as_bytes()));
                 }
             }
         }

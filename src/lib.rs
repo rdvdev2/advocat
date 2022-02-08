@@ -1,18 +1,13 @@
 use std::{env, fmt, ops, path};
-use std::fmt::Display;
 use termion::{color, style};
-use crate::compiler::CompilationError;
 use crate::problem::Problem;
-use crate::testsuite::TestSuite;
 
 mod problem;
 pub mod ux;
-mod download;
-mod testsuite;
-mod template;
-mod compiler;
+mod testing;
+mod compilation;
+mod fetch;
 mod config;
-mod connection_manager;
 
 #[cfg(test)]
 mod test_utils;
@@ -47,7 +42,7 @@ pub fn run() -> Result<exitcode::ExitCode, Error> {
     let problem = Problem::new(&config)?;
     debug!("Done! Problem details: {:?}", problem);
 
-    let (_zip, _main_cc, tests) = fetch_resources(&problem, &config)?;
+    let (_zip, _main_cc, tests) = fetch::fetch_resources(&problem, &config)?;
     
     let tests = [
         load_tests("jutge.org", problem.work_dir.join("samples").as_path(), !tests),
@@ -55,7 +50,7 @@ pub fn run() -> Result<exitcode::ExitCode, Error> {
     ];
 
     debug!("Generating sources...");
-    let generated_sources = template::generate_main(&problem)?;
+    let generated_sources = compilation::generate_main(&problem)?;
 
     println!();
     let binary = execute_compiler(&problem, generated_sources.as_path());
@@ -64,53 +59,10 @@ pub fn run() -> Result<exitcode::ExitCode, Error> {
     Ok(show_veredict(binary, passed_tests, total_tests))
 }
 
-fn execute_task<T, E: Display + Sized>(name: &str, mut task: T) -> bool
-where
-    T: FnMut() -> (ux::TaskStatus, Option<E>)
-{
-    ux::show_task_status(name, ux::TaskType::Fetch, &ux::TaskStatus::InProgress);
-    let (status, err) = task();
-
-    ux::show_task_status(name, ux::TaskType::Fetch, &status);
-    if let Some(err) = err {
-        error!("The task [{}] returned the following error: {}", name, err);
-    }
-    status.is_ok()
-}
-
-fn fetch_resources(problem: &Problem, config: &config::Config) -> Result<(bool, bool, bool), Error> {
-    let mut connection = connection_manager::ConnectionManager::new(config)
-        .map_err(|e| Error {
-            description: format!("Couldn't start the connection manager: {}", e),
-            exitcode: exitcode::IOERR
-        })?;
-
-    let zip = execute_task("Downloading problem zip", || download::download_problem_zip(problem, &mut connection));
-    let main_cc = execute_task("Downloading problem main.cc", || download::download_problem_main(problem, &mut connection));
-    let tests = execute_task("Extracting tests", || download::unzip_problem_tests(problem));
-
-    if !zip {
-        warning!("Unable to retrieve tests!");
-    }
-
-    if !main_cc {
-        return Err( Error {
-            description: String::from("Unable to retrieve the main.cc file, which is required to compile your binary!"),
-            exitcode: exitcode::IOERR
-        });
-    }
-
-    if !tests {
-        warning!("Unable to unzip tests!");
-    }
-
-    Ok((zip, main_cc, tests))
-}
-
-fn load_tests(name: &str, dir: &path::Path, ignore_missing_dir: bool) -> Option<TestSuite> {
+fn load_tests(name: &str, dir: &path::Path, ignore_missing_dir: bool) -> Option<testing::TestSuite> {
     debug!("Loading {} tests...", name);
-    match TestSuite::from_dir(name, dir) {
-        Err(testsuite::Error::PathDoesntExist) if ignore_missing_dir => None,
+    match testing::TestSuite::from_dir(name, dir) {
+        Err(testing::Error::PathDoesntExist) if ignore_missing_dir => None,
         Err(e) => { error!("Error loading {} tests: {}", name, e); None },
         Ok(testsuite) => Some(testsuite)
     }
@@ -120,7 +72,7 @@ fn execute_compiler(problem: &Problem, generated_sources: &path::Path) -> bool {
     const TASK: &str = "Compilation";
 
     ux::show_task_status(TASK, ux::TaskType::Test, &ux::TaskStatus::InProgress);
-    match compiler::P1XX.compile_problem(problem, generated_sources) {
+    match compilation::P1XX.compile_problem(problem, generated_sources) {
         Ok(()) => {
             ux::show_task_status(TASK, ux::TaskType::Test, &ux::TaskStatus::Pass);
             true
@@ -128,7 +80,7 @@ fn execute_compiler(problem: &Problem, generated_sources: &path::Path) -> bool {
         Err(e) => {
             ux::show_task_status(TASK, ux::TaskType::Test, &ux::TaskStatus::Fail);
             match e.error {
-                CompilationError::CompilerError(stderr) => {
+                compilation::Error::CompilerError(stderr) => {
                     ux::show_task_output(format!("Compilation output (pass {})", e.pass).as_str(), &stderr);
                 }
                 _ => error!("Compilation failed unexpectedly: {}", e)
@@ -138,7 +90,7 @@ fn execute_compiler(problem: &Problem, generated_sources: &path::Path) -> bool {
     }
 }
 
-fn run_tests(testsuites: &[Option<testsuite::TestSuite>], binary: &path::Path, skip_tests: bool) -> (usize, usize) {
+fn run_tests(testsuites: &[Option<testing::TestSuite>], binary: &path::Path, skip_tests: bool) -> (usize, usize) {
     let mut passed: usize = 0;
     let mut total: usize = 0;
 

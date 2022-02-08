@@ -1,11 +1,11 @@
-use std::{fmt, fs, io, path};
 use crate::debug;
+use std::{fmt, fs, io, path};
 
 pub enum Error {
     CantReadFile(io::Error),
     CantCreateFile(io::Error),
     CantInflateFile(io::Error),
-    ZipError(zip::result::ZipError)
+    ZipError(zip::result::ZipError),
 }
 
 impl fmt::Display for Error {
@@ -14,18 +14,20 @@ impl fmt::Display for Error {
             Error::CantReadFile(e) => write!(f, "Couldn't read the file: {}", e),
             Error::CantCreateFile(e) => write!(f, "Couldn't create a file: {}", e),
             Error::CantInflateFile(e) => write!(f, "Couldn't inflate a file: {}", e),
-            Error::ZipError(e) => write!(f, "Zip raised an error: {:?}", e)
+            Error::ZipError(e) => write!(f, "Zip raised an error: {:?}", e),
         }
     }
 }
 
 pub fn unzip_samples(zip_path: &path::Path, output_folder: &path::Path) -> Result<(), Error> {
-    debug!("Unzipping {} to {}", zip_path.to_string_lossy(), output_folder.to_string_lossy());
+    debug!(
+        "Unzipping {} to {}",
+        zip_path.to_string_lossy(),
+        output_folder.to_string_lossy()
+    );
 
-    let zip_file = fs::File::open(zip_path)
-        .map_err(Error::CantReadFile)?;
-    let mut archive = zip::ZipArchive::new(zip_file)
-        .map_err(Error::ZipError)?;
+    let zip_file = fs::File::open(zip_path).map_err(Error::CantReadFile)?;
+    let mut archive = zip::ZipArchive::new(zip_file).map_err(Error::ZipError)?;
 
     debug!("Creating output folder {}", output_folder.to_string_lossy());
     fs::create_dir_all(output_folder).map_err(Error::CantCreateFile)?;
@@ -34,7 +36,7 @@ pub fn unzip_samples(zip_path: &path::Path, output_folder: &path::Path) -> Resul
         let mut file = archive.by_index(i).unwrap();
         let outpath = match filter_samples(&file) {
             Some(path) => output_folder.join(path),
-            None => continue
+            None => continue,
         };
 
         if file.is_dir() {

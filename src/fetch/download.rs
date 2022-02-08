@@ -1,7 +1,10 @@
-use crate::{debug, problem, ux};
 use crate::fetch::{connection_manager, unzip};
+use crate::{debug, problem, ux};
 
-pub fn download_problem_zip(problem: &problem::Problem, connection: &mut connection_manager::ConnectionManager) -> (ux::TaskStatus, Option<connection_manager::Error>) {
+pub fn download_problem_zip(
+    problem: &problem::Problem,
+    connection: &mut connection_manager::ConnectionManager,
+) -> (ux::TaskStatus, Option<connection_manager::Error>) {
     let path = problem.work_dir.join("problem.zip");
 
     if path.is_file() {
@@ -18,7 +21,10 @@ pub fn download_problem_zip(problem: &problem::Problem, connection: &mut connect
     }
 }
 
-pub fn download_problem_main(problem: &problem::Problem, connection: &mut connection_manager::ConnectionManager) -> (ux::TaskStatus, Option<connection_manager::Error>) {
+pub fn download_problem_main(
+    problem: &problem::Problem,
+    connection: &mut connection_manager::ConnectionManager,
+) -> (ux::TaskStatus, Option<connection_manager::Error>) {
     let path = problem.work_dir.join("main.cc");
 
     if problem.has_main || path.is_file() {
@@ -30,7 +36,7 @@ pub fn download_problem_main(problem: &problem::Problem, connection: &mut connec
     } else {
         match connection.get_file(&problem.main_cc_url, &path) {
             Ok(()) => (ux::TaskStatus::Done, None),
-            Err(e) => (ux::TaskStatus::Fail, Some(e))
+            Err(e) => (ux::TaskStatus::Fail, Some(e)),
         }
     }
 }
@@ -48,7 +54,7 @@ pub fn unzip_problem_tests(problem: &problem::Problem) -> (ux::TaskStatus, Optio
     } else {
         match unzip::unzip_samples(&zip_path, &tests_path) {
             Ok(()) => (ux::TaskStatus::Done, None),
-            Err(e) => (ux::TaskStatus::Fail, Some(e))
+            Err(e) => (ux::TaskStatus::Fail, Some(e)),
         }
     }
 }

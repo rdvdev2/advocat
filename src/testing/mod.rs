@@ -1,6 +1,6 @@
+mod diff_display;
 mod test;
 mod testsuite;
-mod diff_display;
 
+pub use testsuite::Error;
 pub use testsuite::TestSuite;
-pub use testsuite::Error as Error;

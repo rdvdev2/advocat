@@ -1,25 +1,29 @@
-use std::{fs, io, path, process};
-use std::io::Write;
-use termion::color;
-use crate::{debug, ux};
 use crate::testing::diff_display;
+use crate::{debug, ux};
+use std::io::Write;
+use std::{fs, io, path, process};
+use termion::color;
 
 pub struct Test {
     inputs: String,
-    outputs: String
+    outputs: String,
 }
 
 pub struct TestResult {
     pub status: ux::TaskStatus,
     pub error: Option<io::Error>,
-    pub diff: String
+    pub diff: String,
 }
 
 impl Test {
     pub fn from_files(input_file: &path::Path, output_file: &path::Path) -> Option<Test> {
         if let Ok(inputs) = fs::read_to_string(input_file) {
             if let Ok(outputs) = fs::read_to_string(output_file) {
-                debug!("Found test: {} => {}", input_file.to_string_lossy(), output_file.to_string_lossy());
+                debug!(
+                    "Found test: {} => {}",
+                    input_file.to_string_lossy(),
+                    output_file.to_string_lossy()
+                );
                 return Some(Test { inputs, outputs });
             }
         }
@@ -36,21 +40,39 @@ impl Test {
 
         let mut process = match process {
             Ok(p) => p,
-            Err(e) => return TestResult { status: ux::TaskStatus::Fail, error: Some(e), diff: String::new() }
+            Err(e) => {
+                return TestResult {
+                    status: ux::TaskStatus::Fail,
+                    error: Some(e),
+                    diff: String::new(),
+                }
+            }
         };
 
         debug!("Sending inputs");
         match process.stdin.take() {
-            Some(mut stdin) => if let Err(e) = stdin.write(self.inputs.as_bytes()) {
-                return TestResult { status: ux::TaskStatus::Fail, error: Some(e), diff: String::new() }
-            },
-            None => debug!("The input pipe was closed by the program!")
+            Some(mut stdin) => {
+                if let Err(e) = stdin.write(self.inputs.as_bytes()) {
+                    return TestResult {
+                        status: ux::TaskStatus::Fail,
+                        error: Some(e),
+                        diff: String::new(),
+                    };
+                }
+            }
+            None => debug!("The input pipe was closed by the program!"),
         };
 
         debug!("Waiting for the program to end");
         let output = match process.wait_with_output() {
             Ok(o) => o,
-            Err(e) => return TestResult { status: ux::TaskStatus::Fail, error: Some(e), diff: String::new() }
+            Err(e) => {
+                return TestResult {
+                    status: ux::TaskStatus::Fail,
+                    error: Some(e),
+                    diff: String::new(),
+                }
+            }
         };
 
         debug!("Capturing output");
@@ -63,15 +85,23 @@ impl Test {
         } else {
             ux::TaskStatus::Fail
         };
-        TestResult { status, error: None, diff }
+        TestResult {
+            status,
+            error: None,
+            diff,
+        }
     }
 }
 
 fn parse_diff(diff: Vec<diff::Result<&str>>) -> (bool, String) {
     debug!("Parsing diff");
     let mut pass = true;
-    let mut dd =
-        diff_display::DiffDisplay::new("Expected output", "Your output", &color::Green, &color::Red);
+    let mut dd = diff_display::DiffDisplay::new(
+        "Expected output",
+        "Your output",
+        &color::Green,
+        &color::Red,
+    );
 
     for line in diff {
         match line {

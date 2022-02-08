@@ -1,5 +1,5 @@
-use std::process;
 use advocat::error;
+use std::process;
 
 fn main() -> ! {
     let exitcode = match advocat::run() {

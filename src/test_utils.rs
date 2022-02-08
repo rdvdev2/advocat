@@ -1,17 +1,20 @@
-use std::{env, fs, ops};
-use std::path;
-use crate::{config, problem};
 use crate::config::Config;
+use crate::{config, problem};
+use std::path;
+use std::{env, fs, ops};
 
 static mut CONFIG: Option<Config> = None;
 
 pub struct SelfCleaningTmp {
-    dir: path::PathBuf
+    dir: path::PathBuf,
 }
 
 impl SelfCleaningTmp {
     pub fn new(module: &str, test_name: &str) -> SelfCleaningTmp {
-        let dir = env::temp_dir().join("advocat-test").join(module).join(test_name);
+        let dir = env::temp_dir()
+            .join("advocat-test")
+            .join(module)
+            .join(test_name);
         fs::create_dir_all(&dir).expect("Unable to get a temporal directory");
         SelfCleaningTmp { dir }
     }

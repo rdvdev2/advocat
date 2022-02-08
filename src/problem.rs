@@ -1,10 +1,10 @@
 use core::fmt;
-use std::path;
 use std::fs;
 use std::io;
+use std::path;
 
-use regex::Regex;
 use crate::{config, debug};
+use regex::Regex;
 
 #[derive(Debug)]
 pub struct Problem {
@@ -15,7 +15,7 @@ pub struct Problem {
     pub tmp_dir: path::PathBuf,
     pub has_main: bool,
     pub zip_url: String,
-    pub main_cc_url: String
+    pub main_cc_url: String,
 }
 
 #[derive(Debug)]
@@ -25,7 +25,7 @@ pub enum Error {
     BadPathFormat,
     BadId(IdError),
     BadSource(SourceError),
-    CantCreateWorkDir(io::Error)
+    CantCreateWorkDir(io::Error),
 }
 
 impl fmt::Display for Error {
@@ -36,7 +36,9 @@ impl fmt::Display for Error {
             Error::BadPathFormat => write!(f, "The path ends in \"..\"!"),
             Error::BadId(e) => write!(f, "Problem id is wrong: {}", e),
             Error::BadSource(e) => write!(f, "Problem with main.cc: {}", e),
-            Error::CantCreateWorkDir(e) => write!(f, "Can't create a working dir for the program: {}", e)
+            Error::CantCreateWorkDir(e) => {
+                write!(f, "Can't create a working dir for the program: {}", e)
+            }
         }
     }
 }
@@ -44,17 +46,16 @@ impl fmt::Display for Error {
 impl From<Error> for crate::Error {
     fn from(e: Error) -> Self {
         let exitcode = match e {
-            Error::NonExistingPath |
-            Error::NonDirectoryPath |
-            Error::BadPathFormat |
-            Error::CantCreateWorkDir(_) => exitcode::OSERR,
-            Error::BadId(_) |
-            Error::BadSource(_) => exitcode::DATAERR
+            Error::NonExistingPath
+            | Error::NonDirectoryPath
+            | Error::BadPathFormat
+            | Error::CantCreateWorkDir(_) => exitcode::OSERR,
+            Error::BadId(_) | Error::BadSource(_) => exitcode::DATAERR,
         };
 
         crate::Error {
             description: format!("Couldn't detect your problem: {}", e),
-            exitcode
+            exitcode,
         }
     }
 }
@@ -62,14 +63,14 @@ impl From<Error> for crate::Error {
 #[derive(PartialEq, Debug)]
 pub enum IdError {
     InvalidId,
-    UnsupportedType(char)
+    UnsupportedType(char),
 }
 
 impl fmt::Display for IdError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IdError::InvalidId => write!(f, "The problem id is invalid!"),
-            IdError::UnsupportedType(_) => write!(f, "The problem type is unsupported!")
+            IdError::UnsupportedType(_) => write!(f, "The problem type is unsupported!"),
         }
     }
 }
@@ -78,7 +79,7 @@ impl fmt::Display for IdError {
 pub enum SourceError {
     NonExistingPath,
     NonFilePath,
-    CantRead(io::Error)
+    CantRead(io::Error),
 }
 
 impl fmt::Display for SourceError {
@@ -86,7 +87,7 @@ impl fmt::Display for SourceError {
         match self {
             SourceError::NonExistingPath => write!(f, "File doesn't exist!"),
             SourceError::NonFilePath => write!(f, "Not a file!"),
-            SourceError::CantRead(e) => write!(f, "Error reading contents: {}", e)
+            SourceError::CantRead(e) => write!(f, "Error reading contents: {}", e),
         }
     }
 }
@@ -99,22 +100,22 @@ impl Problem {
             return Err(Error::NonDirectoryPath);
         }
 
-        let id: String = config.problem_dir.file_name()
+        let id: String = config
+            .problem_dir
+            .file_name()
             .ok_or(Error::BadPathFormat)?
-            .to_string_lossy().into();
-        let id = verify_id(id)
-            .map_err(Error::BadId)?;
+            .to_string_lossy()
+            .into();
+        let id = verify_id(id).map_err(Error::BadId)?;
 
         let source = config.problem_dir.join("main.cc");
         let output = config.problem_dir.join("main.x");
         let work_dir = config.cache_dir.join(&id);
         let tmp_dir = config.tmp_dir.join(&id);
 
-        fs::create_dir_all(work_dir.as_path())
-            .map_err(Error::CantCreateWorkDir)?;
+        fs::create_dir_all(work_dir.as_path()).map_err(Error::CantCreateWorkDir)?;
 
-        let has_main = file_has_main(&source)
-            .map_err(Error::BadSource)?;
+        let has_main = file_has_main(&source).map_err(Error::BadSource)?;
 
         let problem_url = format!("https://jutge.org/problems/{}", id);
         let zip_url = format!("{}/zip", problem_url);
@@ -128,7 +129,7 @@ impl Problem {
             tmp_dir,
             has_main,
             zip_url,
-            main_cc_url
+            main_cc_url,
         })
     }
 }
@@ -153,8 +154,7 @@ fn file_has_main(path: &path::Path) -> Result<bool, SourceError> {
     } else if !path.is_file() {
         Err(SourceError::NonFilePath)
     } else {
-        let contents = fs::read_to_string(path)
-            .map_err(SourceError::CantRead)?;
+        let contents = fs::read_to_string(path).map_err(SourceError::CantRead)?;
         debug!("Done reading {}", path.to_string_lossy());
         let re = Regex::new(r"int\s+main\s*(\s*)").unwrap();
         Ok(re.is_match(&contents))
@@ -170,74 +170,101 @@ mod test {
     fn generate_public_problem() {
         let p = test_utils::get_problem("P00000_xx");
         assert_eq!(p.id, "P00000_xx");
-        assert_eq!(p.source, test_utils::get_tests_folder().join("problems/P00000_xx/main.cc"));
-        assert_eq!(p.output, test_utils::get_tests_folder().join("problems/P00000_xx/main.x"));
+        assert_eq!(
+            p.source,
+            test_utils::get_tests_folder().join("problems/P00000_xx/main.cc")
+        );
+        assert_eq!(
+            p.output,
+            test_utils::get_tests_folder().join("problems/P00000_xx/main.x")
+        );
         assert!(!p.work_dir.to_string_lossy().is_empty());
         assert!(p.has_main);
         assert_eq!(p.zip_url, "https://jutge.org/problems/P00000_xx/zip");
-        assert_eq!(p.main_cc_url, "https://jutge.org/problems/P00000_xx/main/cc"); // Irrelevant, but still tested
+        assert_eq!(
+            p.main_cc_url,
+            "https://jutge.org/problems/P00000_xx/main/cc"
+        ); // Irrelevant, but still tested
     }
 
     #[test]
     fn generate_public_nomain_problem() {
         let p = test_utils::get_problem("P00001_xx");
         assert_eq!(p.id, "P00001_xx");
-        assert_eq!(p.source, test_utils::get_tests_folder().join("problems/P00001_xx/main.cc"));
-        assert_eq!(p.output, test_utils::get_tests_folder().join("problems/P00001_xx/main.x"));
+        assert_eq!(
+            p.source,
+            test_utils::get_tests_folder().join("problems/P00001_xx/main.cc")
+        );
+        assert_eq!(
+            p.output,
+            test_utils::get_tests_folder().join("problems/P00001_xx/main.x")
+        );
         assert!(!p.work_dir.to_string_lossy().is_empty());
         assert!(!p.has_main);
         assert_eq!(p.zip_url, "https://jutge.org/problems/P00001_xx/zip");
-        assert_eq!(p.main_cc_url, "https://jutge.org/problems/P00001_xx/main/cc");
+        assert_eq!(
+            p.main_cc_url,
+            "https://jutge.org/problems/P00001_xx/main/cc"
+        );
     }
 
     #[test]
     fn generate_private_nomain_problem() {
         let p = test_utils::get_problem("X00000_xx");
         assert_eq!(p.id, "X00000_xx");
-        assert_eq!(p.source, test_utils::get_tests_folder().join("problems/X00000_xx/main.cc"));
-        assert_eq!(p.output, test_utils::get_tests_folder().join("problems/X00000_xx/main.x"));
+        assert_eq!(
+            p.source,
+            test_utils::get_tests_folder().join("problems/X00000_xx/main.cc")
+        );
+        assert_eq!(
+            p.output,
+            test_utils::get_tests_folder().join("problems/X00000_xx/main.x")
+        );
         assert!(!p.work_dir.to_string_lossy().is_empty());
         assert!(!p.has_main);
         assert_eq!(p.zip_url, "https://jutge.org/problems/X00000_xx/zip");
-        assert_eq!(p.main_cc_url, "https://jutge.org/problems/X00000_xx/main/cc");
+        assert_eq!(
+            p.main_cc_url,
+            "https://jutge.org/problems/X00000_xx/main/cc"
+        );
     }
 
     #[test]
     fn generate_problem_non_existing() {
         match test_utils::try_get_problem("foobar") {
-            Err(Error::NonExistingPath) => {},
-            _ => panic!()
+            Err(Error::NonExistingPath) => {}
+            _ => panic!(),
         }
     }
 
     #[test]
     fn generate_problem_non_directory() {
         match test_utils::try_get_problem("P00000_xx/main.cc") {
-            Err(Error::NonDirectoryPath) => {},
-            _ => panic!()
+            Err(Error::NonDirectoryPath) => {}
+            _ => panic!(),
         }
     }
     #[test]
     fn generate_problem_bad_format() {
         match test_utils::try_get_problem("..") {
-            Err(Error::BadPathFormat) => {},
-            _ => panic!()
+            Err(Error::BadPathFormat) => {}
+            _ => panic!(),
         }
     }
 
     #[test]
     fn generate_problem_bad_id() {
         match test_utils::try_get_problem("") {
-            Err(Error::BadId(_)) => {},
-            _ => panic!()
+            Err(Error::BadId(_)) => {}
+            _ => panic!(),
         }
     }
 
     #[test]
     fn generate_problem_bad_main() {
         match test_utils::try_get_problem("P99999_xx") {
-            Err(Error::BadSource(_)) => {},
-            _ => panic!()
+            Err(Error::BadSource(_)) => {}
+            _ => panic!(),
         }
     }
 
@@ -284,7 +311,7 @@ mod test {
     fn has_main_non_existent() {
         match test_has_main("foobar") {
             Err(SourceError::NonExistingPath) => {}
-            _ => panic!()
+            _ => panic!(),
         }
     }
 
@@ -292,7 +319,7 @@ mod test {
     fn has_main_non_file() {
         match test_has_main("problems") {
             Err(SourceError::NonFilePath) => {}
-            _ => panic!()
+            _ => panic!(),
         }
     }
 }

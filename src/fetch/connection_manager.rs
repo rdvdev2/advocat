@@ -1,13 +1,13 @@
-use std::{fmt, fs, io, path};
-use std::io::Write;
-use curl::easy;
-use crate::{config, debug, warning};
 use crate::fetch::credentials;
+use crate::{config, debug, warning};
+use curl::easy;
+use std::io::Write;
+use std::{fmt, fs, io, path};
 
 pub enum Error {
     CurlError(curl::Error),
     IoError(io::Error),
-    AuthError
+    AuthError,
 }
 
 impl fmt::Display for Error {
@@ -15,7 +15,7 @@ impl fmt::Display for Error {
         match self {
             Error::CurlError(e) => write!(f, "Connection error: {}", e),
             Error::IoError(e) => write!(f, "IO error: {}", e),
-            Error::AuthError => write!(f, "The requested content isn't publicly available")
+            Error::AuthError => write!(f, "The requested content isn't publicly available"),
         }
     }
 }
@@ -33,7 +33,7 @@ impl From<io::Error> for Error {
 }
 
 pub struct ConnectionManager {
-    handle: easy::Easy
+    handle: easy::Easy,
 }
 
 impl ConnectionManager {
@@ -69,7 +69,8 @@ impl ConnectionManager {
         let mut file = fs::File::create(path)?;
 
         self.handle.url(url)?;
-        self.handle.write_function(move |data| file.write(data).or(Ok(0)))?;
+        self.handle
+            .write_function(move |data| file.write(data).or(Ok(0)))?;
         self.handle.perform()?;
 
         if let Some(content_type) = self.handle.content_type()? {
@@ -82,7 +83,10 @@ impl ConnectionManager {
         Ok(())
     }
 
-    fn try_to_authenticate(&mut self, credentials: &credentials::Credentials) -> Result<bool, Error> {
+    fn try_to_authenticate(
+        &mut self,
+        credentials: &credentials::Credentials,
+    ) -> Result<bool, Error> {
         if let Some(form) = credentials.build_form() {
             debug!("Attempting to authenticate");
             self.handle.url("https://jutge.org/")?;

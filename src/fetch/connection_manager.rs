@@ -3,6 +3,7 @@ use crate::{config, debug, warning};
 use curl::easy;
 use std::io::Write;
 use std::{fmt, fs, io, path};
+use std::cell::RefCell;
 
 pub enum Error {
     CurlError(curl::Error),
@@ -33,7 +34,7 @@ impl From<io::Error> for Error {
 }
 
 pub struct ConnectionManager {
-    handle: easy::Easy,
+    handle: RefCell<easy::Easy>,
 }
 
 impl ConnectionManager {
@@ -46,7 +47,7 @@ impl ConnectionManager {
         let mut handle = easy::Easy::new();
         handle.cookie_file(cookie_store.as_path())?;
         handle.cookie_jar(cookie_store.as_path())?;
-        let mut cm = ConnectionManager { handle };
+        let cm = ConnectionManager { handle: RefCell::new(handle) };
 
         if cm.check_is_authenticated()? {
             debug!("Client is authenticated, reusing previous session")
@@ -64,16 +65,16 @@ impl ConnectionManager {
         Ok(cm)
     }
 
-    pub fn get_file(&mut self, url: &str, path: &path::Path) -> Result<(), Error> {
+    pub fn get_file(&self, url: &str, path: &path::Path) -> Result<(), Error> {
         debug!("Downloading {} to {}", url, path.to_string_lossy());
+        let mut handle = self.handle.borrow_mut();
         let mut file = fs::File::create(path)?;
 
-        self.handle.url(url)?;
-        self.handle
-            .write_function(move |data| file.write(data).or(Ok(0)))?;
-        self.handle.perform()?;
+        handle.url(url)?;
+        handle.write_function(move |data| file.write(data).or(Ok(0)))?;
+        handle.perform()?;
 
-        if let Some(content_type) = self.handle.content_type()? {
+        if let Some(content_type) = handle.content_type()? {
             if content_type.contains("html") {
                 fs::remove_file(path)?;
                 return Err(Error::AuthError);
@@ -84,17 +85,19 @@ impl ConnectionManager {
     }
 
     fn try_to_authenticate(
-        &mut self,
+        &self,
         credentials: &credentials::Credentials,
     ) -> Result<bool, Error> {
         if let Some(form) = credentials.build_form() {
             debug!("Attempting to authenticate");
-            self.handle.url("https://jutge.org/")?;
-            self.handle.nobody(true)?;
-            self.handle.httppost(form)?;
-            self.handle.perform()?;
-            self.handle.nobody(false)?;
+            let mut handle = self.handle.borrow_mut();
+            handle.url("https://jutge.org/")?;
+            handle.nobody(true)?;
+            handle.httppost(form)?;
+            handle.perform()?;
+            handle.nobody(false)?;
             debug!("Authentication finished");
+            drop(handle); // We can't check authentication without borrowing the handle, so we drop it here
             self.check_is_authenticated()
         } else {
             debug!("Unable to generate the authentication form");
@@ -102,12 +105,13 @@ impl ConnectionManager {
         }
     }
 
-    fn check_is_authenticated(&mut self) -> Result<bool, Error> {
+    fn check_is_authenticated(&self) -> Result<bool, Error> {
         let mut response = Vec::new();
+        let mut handle = self.handle.borrow_mut();
 
-        self.handle.url("https://jutge.org/dashboard")?;
+        handle.url("https://jutge.org/dashboard")?;
         {
-            let mut transfer = self.handle.transfer();
+            let mut transfer = handle.transfer();
             transfer.write_function(|data| {
                 response.extend_from_slice(data);
                 Ok(data.len())

@@ -26,14 +26,9 @@ password = LA_TEVA_CONTRASENYA
 ```
 
 ## Instruccions d'instal·lació / actualització
-Clona el repositori:
+Per a instal·lar o actualitzar el programa:
 ``` shell
-git clone https://github.com/rdvdev2/advocat
-```
-Compila el programa i instal·lal:
-``` shell
-cd advocat
-cargo install --path .
+cargo install --path https://github.com/rdvdev2/advocat
 ```
 Si mai has instal·lat programes mitjançant `cargo install`, afegeix la ruta d'instal·lació al path:
 ``` shell
@@ -41,12 +36,6 @@ Si mai has instal·lat programes mitjançant `cargo install`, afegeix la ruta d'
 export PATH=$PATH:$HOME/.cargo/bin
 ```
 Si tornes a obrir la terminal o recarregues el fitxer `.bashrc` / `.zshrc` el programa ja estarà disponible.
-
-Si necessites actualitzar el programa, descarrega els canvis i torna a compilar i instal·lar:
-``` shell
-git pull
-cargo install --path .
-```
 
 ## Com afegir tests a un problema
 Alguns problemes al jutge no tenen tests públics, o potser vols afegir al teu joc de proves un test privat que ha fallat

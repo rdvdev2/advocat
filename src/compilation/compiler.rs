@@ -1,5 +1,8 @@
 use crate::{debug, problem};
 use std::{fmt, io, path, process};
+use crate::fetch::connection_manager::ConnectionManager;
+use crate::fetch::resource;
+use crate::fetch::resource::Resource;
 
 pub static P1XX: Compiler = Compiler {
     command: "g++",
@@ -146,5 +149,19 @@ impl Compiler<'_> {
         debug!("Running the second pass compilation (G++ binary)");
         self.compile_and_link_second_pass(generated_source, problem.output.as_path())
             .map_err(|error| CompileProcessError { pass: 2, error })
+    }
+
+    pub fn write_required_resources<'a>(&self, problem: &problem::Problem, connection: &'a ConnectionManager, resources: &mut Vec<Box<dyn Resource + 'a>>) {
+        if !problem.has_main {
+            let main_cc = resource::OnlineResource::new(
+                problem.work_dir.join("main.cc"),
+                problem.main_cc_url.clone(),
+                connection
+            );
+            resources.push(Box::new(main_cc));
+        }
+
+        let user_source = resource::UserResource::new(problem.source.to_path_buf());
+        resources.push(Box::new(user_source));
     }
 }

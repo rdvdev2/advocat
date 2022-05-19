@@ -47,13 +47,13 @@ pub fn run() -> Result<exitcode::ExitCode, Error> {
     let problem = Problem::new(&config)?;
     debug!("Done! Problem details: {:?}", problem);
 
-    let (_zip, _main_cc, tests) = fetch::fetch_resources(&problem, &config)?;
+    let (_compilation_resources, testing_resources) = fetch::fetch_resources(&problem, &config)?;
 
     let tests = [
         load_tests(
             "jutge.org",
             problem.work_dir.join("samples").as_path(),
-            !tests,
+            !testing_resources,
         ),
         load_tests("user", problem.source.parent().unwrap(), false),
     ];

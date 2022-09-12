@@ -28,7 +28,7 @@ password = LA_TEVA_CONTRASENYA
 ## Instruccions d'instal·lació / actualització
 Per a instal·lar o actualitzar el programa:
 ``` shell
-cargo install --git https://github.com/rdvdev2/advocat
+cargo install advocat
 ```
 Si mai has instal·lat programes mitjançant `cargo install`, afegeix la ruta d'instal·lació al path:
 ``` shell

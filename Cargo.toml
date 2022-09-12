@@ -4,8 +4,12 @@ description = "A complimentary CLI tool to jutge.org"
 version = "3.0.0"
 license="GPL-3.0"
 authors = ["Roger Díaz Viñolas <rdvdev2@gmail.com>"]
-readme = "README.md"
+readme = "README.MD"
 edition = "2021"
+repository = "https://github.com/rdvdev2/advocat"
+keywords = ["cli", "tui", "jutge", "upc", "fib"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [".*", "advocat.iml"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
